@@ -19,8 +19,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useBoardStore } from '@/stores/boardStore'
+import { useAuth } from '@/hooks/useAuth'
 import type { Task, Priority } from '@/types'
 import { PRIORITY_LABELS } from '@/types'
+import { Plus } from 'lucide-react'
 
 interface TaskDialogProps {
   open: boolean
@@ -31,7 +33,8 @@ interface TaskDialogProps {
 }
 
 export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true }: TaskDialogProps) {
-  const { subjects, tasks, addTask, updateTask, deleteTask } = useBoardStore()
+  const { subjects, tasks, addTask, updateTask, deleteTask, addSubject } = useBoardStore()
+  const { user } = useAuth()
   const isEditing = !!task
   const readOnly = !canEdit && isEditing
 
@@ -43,6 +46,8 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
   const [isRepeat, setIsRepeat] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showNewSubject, setShowNewSubject] = useState(false)
+  const [newSubjectName, setNewSubjectName] = useState('')
 
   useEffect(() => {
     if (open) {
@@ -62,8 +67,23 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
         setIsRepeat(false)
       }
       setError(null)
+      setShowNewSubject(false)
+      setNewSubjectName('')
     }
   }, [open, task])
+
+  const handleAddNewSubject = async () => {
+    if (!newSubjectName.trim() || !user?.id) return
+
+    try {
+      const newSubject = await addSubject(user.id, newSubjectName.trim())
+      setSubjectId(newSubject.id)
+      setShowNewSubject(false)
+      setNewSubjectName('')
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Ошибка создания предмета')
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -168,19 +188,73 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="subject">Предмет</Label>
-              <Select value={subjectId} onValueChange={setSubjectId} disabled={loading || readOnly}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Выберите..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">Без предмета</SelectItem>
-                  {subjects.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
+              {showNewSubject ? (
+                <div className="flex gap-2">
+                  <Input
+                    value={newSubjectName}
+                    onChange={(e) => setNewSubjectName(e.target.value)}
+                    placeholder="Название предмета"
+                    disabled={loading}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault()
+                        handleAddNewSubject()
+                      }
+                      if (e.key === 'Escape') {
+                        setShowNewSubject(false)
+                        setNewSubjectName('')
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <Button
+                    type="button"
+                    size="icon"
+                    onClick={handleAddNewSubject}
+                    disabled={loading || !newSubjectName.trim()}
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <Select
+                  value={subjectId}
+                  onValueChange={(value) => {
+                    if (value === 'new') {
+                      setShowNewSubject(true)
+                    } else {
+                      setSubjectId(value)
+                    }
+                  }}
+                  disabled={loading || readOnly}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Выберите..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Без предмета</SelectItem>
+                    {subjects.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <span className="flex items-center gap-2">
+                          {s.color && (
+                            <span
+                              className="w-3 h-3 rounded-full inline-block"
+                              style={{ backgroundColor: s.color }}
+                            />
+                          )}
+                          {s.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                    <SelectItem value="new" className="text-primary">
+                      <span className="flex items-center gap-2">
+                        <Plus className="h-3 w-3" />
+                        Добавить предмет...
+                      </span>
                     </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <div className="space-y-2">

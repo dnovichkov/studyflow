@@ -257,7 +257,32 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       .order('name')
 
     if (error) throw error
-    set({ subjects: data?.map(mapSubject) || [] })
+
+    // If no subjects exist, create default school subjects
+    if (!data || data.length === 0) {
+      const defaultSubjects = [
+        { name: 'Математика', color: '#3b82f6' },
+        { name: 'Русский язык', color: '#ef4444' },
+        { name: 'Литература', color: '#a855f7' },
+        { name: 'Английский язык', color: '#22c55e' },
+        { name: 'История', color: '#f59e0b' },
+        { name: 'Физика', color: '#06b6d4' },
+        { name: 'Химия', color: '#ec4899' },
+        { name: 'Биология', color: '#84cc16' },
+        { name: 'География', color: '#14b8a6' },
+        { name: 'Информатика', color: '#6366f1' },
+      ]
+
+      const { data: created, error: createError } = await supabase
+        .from('subjects')
+        .insert(defaultSubjects.map(s => ({ ...s, user_id: userId })))
+        .select()
+
+      if (createError) throw createError
+      set({ subjects: created?.map(mapSubject) || [] })
+    } else {
+      set({ subjects: data.map(mapSubject) })
+    }
   },
 }))
 
