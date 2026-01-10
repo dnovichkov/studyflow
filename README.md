@@ -82,31 +82,34 @@ npm run test:e2e
 # Создать .env файл
 cp .env.example .env
 
-# Собрать и запустить
+# Собрать и запустить (по умолчанию порт 3000)
 docker-compose up --build -d
 
-# Приложение доступно на http://localhost
+# Или с кастомным портом
+APP_PORT=8080 docker-compose up --build -d
+
+# Приложение доступно на http://localhost:3000
 ```
 
 ### Production
 
 ```bash
-# Скачать образ
-docker pull ghcr.io/username/studyflow:latest
+# Создать .env файл
+cp .env.example .env
+# Заполнить VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY, APP_PORT
 
-# Запустить с переменными окружения
+# Запустить с готовым образом из GHCR
+docker-compose -f docker-compose.prod.yml up -d
+```
+
+Или вручную:
+```bash
 docker run -d \
-  -p 80:80 \
+  -p 3000:80 \
   -e VITE_SUPABASE_URL=https://xxx.supabase.co \
   -e VITE_SUPABASE_ANON_KEY=your-anon-key \
   --name studyflow \
-  ghcr.io/username/studyflow:latest
-```
-
-Или через docker-compose:
-```bash
-# Создать .env файл с переменными
-docker-compose up -d
+  ghcr.io/dnovichkov/studyflow:latest
 ```
 
 ## Структура проекта

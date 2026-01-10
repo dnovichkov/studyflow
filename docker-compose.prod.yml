@@ -1,9 +1,6 @@
 services:
   studyflow:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: studyflow:latest
+    image: ghcr.io/dnovichkov/studyflow:latest
     container_name: studyflow
     restart: unless-stopped
     ports:
