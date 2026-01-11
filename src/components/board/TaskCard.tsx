@@ -24,6 +24,7 @@ export function TaskCard({ task, subject, onClick }: TaskCardProps) {
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    touchAction: 'none',
   }
 
   const isOverdue = task.deadline && new Date(task.deadline) < new Date()
