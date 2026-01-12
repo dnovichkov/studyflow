@@ -11,7 +11,7 @@ import type { Task } from '@/types'
 
 export function BoardPage() {
   const { user } = useAuth()
-  const { board, columns, userRole, loading, error, fetchBoard, fetchSubjects } = useBoardStore()
+  const { board, columns, userRole, loading, error, fetchBoard } = useBoardStore()
   const canEdit = userRole === 'owner' || userRole === 'editor'
 
   useRealtime(board?.id)
@@ -23,9 +23,8 @@ export function BoardPage() {
   useEffect(() => {
     if (user?.id) {
       fetchBoard(user.id)
-      fetchSubjects(user.id)
     }
-  }, [user?.id, fetchBoard, fetchSubjects])
+  }, [user?.id, fetchBoard])
 
   const handleAddTask = (columnId: string) => {
     setSelectedTask(null)

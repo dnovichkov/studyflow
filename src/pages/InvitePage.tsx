@@ -73,7 +73,9 @@ export function InvitePage() {
         return
       }
 
-      if (result.success) {
+      if (result.success && result.board_id) {
+        // Save the board ID so it opens automatically
+        localStorage.setItem('selectedBoardId', result.board_id)
         navigate('/board')
       }
     } catch (err) {

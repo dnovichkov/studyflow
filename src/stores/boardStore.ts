@@ -4,18 +4,30 @@ import type { Board, Column, Task, Subject, Priority } from '@/types'
 
 type UserRole = 'owner' | 'editor' | 'viewer'
 
+interface AvailableBoard {
+  id: string
+  title: string
+  role: UserRole
+  isOwner: boolean
+  ownerEmail?: string
+}
+
 interface BoardState {
   board: Board | null
   columns: Column[]
   tasks: Task[]
   subjects: Subject[]
   userRole: UserRole
+  availableBoards: AvailableBoard[]
   loading: boolean
   error: string | null
 
-  fetchBoard: (userId: string) => Promise<void>
+  fetchBoard: (userId: string, boardId?: string) => Promise<void>
+  fetchAvailableBoards: (userId: string) => Promise<void>
+  switchBoard: (userId: string, boardId: string) => Promise<void>
   createBoard: (userId: string, title: string) => Promise<Board>
   createDefaultColumns: (boardId: string) => Promise<void>
+  createDefaultSubjects: (userId: string) => Promise<void>
 
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Task>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
@@ -33,25 +45,131 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   tasks: [],
   subjects: [],
   userRole: 'viewer',
+  availableBoards: [],
   loading: false,
   error: null,
 
-  fetchBoard: async (userId: string) => {
+  fetchAvailableBoards: async (userId: string) => {
+    try {
+      // Get own boards
+      const { data: ownBoards, error: ownError } = await supabase
+        .from('boards')
+        .select('id, title')
+        .eq('user_id', userId)
+
+      if (ownError) throw ownError
+
+      // Get shared boards through board_members
+      const { data: memberships, error: memberError } = await supabase
+        .from('board_members')
+        .select(`
+          role,
+          board:boards(id, title, owner_email)
+        `)
+        .eq('user_id', userId)
+
+      if (memberError) throw memberError
+
+      const available: AvailableBoard[] = []
+
+      // Add own boards
+      for (const board of ownBoards || []) {
+        available.push({
+          id: board.id,
+          title: board.title,
+          role: 'owner',
+          isOwner: true,
+        })
+      }
+
+      // Add shared boards (excluding ones where user is owner)
+      for (const membership of memberships || []) {
+        // Supabase can return array or single object for joins
+        const boardRaw = membership.board
+        const boardData = Array.isArray(boardRaw) ? boardRaw[0] : boardRaw
+        if (boardData && !available.some(b => b.id === boardData.id)) {
+          available.push({
+            id: boardData.id as string,
+            title: boardData.title as string,
+            role: membership.role as UserRole,
+            isOwner: false,
+            ownerEmail: boardData.owner_email as string | undefined,
+          })
+        }
+      }
+
+      set({ availableBoards: available })
+    } catch (err) {
+      console.error('Error fetching available boards:', err)
+    }
+  },
+
+  switchBoard: async (userId: string, boardId: string) => {
+    localStorage.setItem('selectedBoardId', boardId)
+    await get().fetchBoard(userId, boardId)
+  },
+
+  fetchBoard: async (userId: string, boardId?: string) => {
     set({ loading: true, error: null })
     try {
-      const { data: boards, error: boardError } = await supabase
-        .from('boards')
-        .select('*')
-        .eq('user_id', userId)
-        .limit(1)
+      // First fetch available boards to know what we can access
+      await get().fetchAvailableBoards(userId)
+      const availableBoards = get().availableBoards
 
-      if (boardError) throw boardError
+      let board = null
 
-      let board = boards?.[0] || null
+      // If boardId specified, try to load that board
+      if (boardId) {
+        const { data, error } = await supabase
+          .from('boards')
+          .select('*')
+          .eq('id', boardId)
+          .single()
 
+        if (!error && data) {
+          board = data
+        }
+      }
+
+      // If no board yet, try to load from localStorage
+      if (!board) {
+        const savedBoardId = localStorage.getItem('selectedBoardId')
+        if (savedBoardId && availableBoards.some(b => b.id === savedBoardId)) {
+          const { data, error } = await supabase
+            .from('boards')
+            .select('*')
+            .eq('id', savedBoardId)
+            .single()
+
+          if (!error && data) {
+            board = data
+          }
+        }
+      }
+
+      // If still no board, get first available (prefer own boards)
+      if (!board && availableBoards.length > 0) {
+        const ownBoard = availableBoards.find(b => b.isOwner)
+        const targetBoard = ownBoard || availableBoards[0]
+
+        const { data, error } = await supabase
+          .from('boards')
+          .select('*')
+          .eq('id', targetBoard.id)
+          .single()
+
+        if (!error && data) {
+          board = data
+        }
+      }
+
+      // If still no board, create a new one
       if (!board) {
         board = await get().createBoard(userId, 'Моя доска')
         await get().createDefaultColumns(board.id)
+        await get().createDefaultSubjects(userId)
+        // Refresh available boards after creating
+        await get().fetchAvailableBoards(userId)
       }
 
       const { data: columns, error: colError } = await supabase
@@ -87,10 +205,22 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         }
       }
 
+      // Save selected board to localStorage
+      localStorage.setItem('selectedBoardId', board.id)
+
+      // Fetch subjects for the board owner (not current user)
+      const boardOwnerId = board.user_id as string
+      const { data: subjectsData } = await supabase
+        .from('subjects')
+        .select('*')
+        .eq('user_id', boardOwnerId)
+        .order('name')
+
       set({
         board: mapBoard(board),
         columns: columns?.map(mapColumn) || [],
         tasks: tasks?.map(mapTask) || [],
+        subjects: subjectsData?.map(mapSubject) || [],
         userRole,
         loading: false,
       })
@@ -120,6 +250,25 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     const { error } = await supabase.from('columns').insert(defaultColumns)
     if (error) throw error
+  },
+
+  createDefaultSubjects: async (userId: string) => {
+    const defaultSubjects = [
+      { name: 'Математика', color: '#3b82f6' },
+      { name: 'Русский язык', color: '#ef4444' },
+      { name: 'Литература', color: '#a855f7' },
+      { name: 'Английский язык', color: '#22c55e' },
+      { name: 'История', color: '#f59e0b' },
+      { name: 'Физика', color: '#06b6d4' },
+      { name: 'Химия', color: '#ec4899' },
+      { name: 'Биология', color: '#84cc16' },
+      { name: 'География', color: '#14b8a6' },
+      { name: 'Информатика', color: '#6366f1' },
+    ]
+
+    await supabase
+      .from('subjects')
+      .insert(defaultSubjects.map(s => ({ ...s, user_id: userId })))
   },
 
   addTask: async (task) => {

@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/sheet'
 import { ShareDialog } from '@/components/board/ShareDialog'
 import { PrintDialog } from '@/components/board/PrintDialog'
+import { BoardSwitcher } from '@/components/board/BoardSwitcher'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoardStore } from '@/stores/boardStore'
 import { useTheme } from '@/hooks/useTheme'
@@ -44,7 +45,15 @@ export function Header() {
   return (
     <header className="border-b bg-background">
       <div className="flex items-center justify-between px-4 py-3">
-        <h1 className="text-xl font-semibold">StudyFlow</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-xl font-semibold">StudyFlow</h1>
+          {board && (
+            <>
+              <span className="text-muted-foreground">/</span>
+              <BoardSwitcher />
+            </>
+          )}
+        </div>
 
         {/* Desktop navigation */}
         <div className="hidden md:flex items-center gap-2">
