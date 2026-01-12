@@ -294,6 +294,9 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
   <meta charset="UTF-8">
   <title>Мои задания</title>
   <style>
+    @page {
+      margin: 20mm 25mm;
+    }
     * {
       margin: 0;
       padding: 0;
@@ -304,7 +307,9 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
       font-size: 12pt;
       line-height: 1.4;
       color: #000;
-      padding: 20px;
+      padding: 10px 15px;
+      max-width: 700px;
+      margin: 0 auto;
     }
     .header {
       text-align: center;
