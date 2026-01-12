@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MenuIcon, MoonIcon, SunIcon } from 'lucide-react'
+import { MenuIcon, MoonIcon, SunIcon, PrinterIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -17,6 +17,7 @@ import {
   SheetTrigger,
 } from '@/components/ui/sheet'
 import { ShareDialog } from '@/components/board/ShareDialog'
+import { PrintDialog } from '@/components/board/PrintDialog'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoardStore } from '@/stores/boardStore'
 import { useTheme } from '@/hooks/useTheme'
@@ -27,6 +28,7 @@ export function Header() {
   const { isDark, toggleTheme } = useTheme()
   const navigate = useNavigate()
   const [shareOpen, setShareOpen] = useState(false)
+  const [printOpen, setPrintOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
@@ -47,9 +49,15 @@ export function Header() {
         {/* Desktop navigation */}
         <div className="hidden md:flex items-center gap-2">
           {board && (
-            <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-              Поделиться
-            </Button>
+            <>
+              <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
+                <PrinterIcon className="h-4 w-4 mr-2" />
+                Печать
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
+                Поделиться
+              </Button>
+            </>
           )}
 
           <Button
@@ -106,16 +114,29 @@ export function Header() {
                 </div>
 
                 {board && (
-                  <Button
-                    variant="outline"
-                    className="justify-start"
-                    onClick={() => {
-                      setMobileMenuOpen(false)
-                      setShareOpen(true)
-                    }}
-                  >
-                    Поделиться доской
-                  </Button>
+                  <>
+                    <Button
+                      variant="outline"
+                      className="justify-start"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        setPrintOpen(true)
+                      }}
+                    >
+                      <PrinterIcon className="h-4 w-4 mr-2" />
+                      Печать заданий
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
+                        setShareOpen(true)
+                      }}
+                    >
+                      Поделиться доской
+                    </Button>
+                  </>
                 )}
 
                 <Button
@@ -153,11 +174,17 @@ export function Header() {
       </div>
 
       {board && (
-        <ShareDialog
-          open={shareOpen}
-          onOpenChange={setShareOpen}
-          boardId={board.id}
-        />
+        <>
+          <ShareDialog
+            open={shareOpen}
+            onOpenChange={setShareOpen}
+            boardId={board.id}
+          />
+          <PrintDialog
+            open={printOpen}
+            onOpenChange={setPrintOpen}
+          />
+        </>
       )}
     </header>
   )
