@@ -48,6 +48,7 @@ export function Column({ column, tasks, subjects, onAddTask, onTaskClick, canEdi
               key={task.id}
               task={task}
               subject={subjects.find((s) => s.id === task.subjectId)}
+              columnTitle={column.title}
               onClick={() => onTaskClick(task)}
             />
           ))}

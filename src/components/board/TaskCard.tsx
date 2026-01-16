@@ -8,10 +8,11 @@ import { cn } from '@/lib/utils'
 interface TaskCardProps {
   task: Task
   subject?: Subject
+  columnTitle?: string
   onClick?: () => void
 }
 
-export function TaskCard({ task, subject, onClick }: TaskCardProps) {
+export function TaskCard({ task, subject, columnTitle, onClick }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -27,7 +28,7 @@ export function TaskCard({ task, subject, onClick }: TaskCardProps) {
     touchAction: 'none',
   }
 
-  const isOverdue = task.deadline && new Date(task.deadline) < new Date()
+  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && columnTitle !== 'Готово'
 
   return (
     <Card
