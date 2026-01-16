@@ -19,7 +19,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useBoardStore } from '@/stores/boardStore'
-import { useAuth } from '@/hooks/useAuth'
 import type { Task, Priority } from '@/types'
 import { PRIORITY_LABELS } from '@/types'
 import { Plus } from 'lucide-react'
@@ -33,8 +32,7 @@ interface TaskDialogProps {
 }
 
 export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true }: TaskDialogProps) {
-  const { subjects, tasks, addTask, updateTask, deleteTask, addSubject } = useBoardStore()
-  const { user } = useAuth()
+  const { board, subjects, tasks, addTask, updateTask, deleteTask, addSubject } = useBoardStore()
   const isEditing = !!task
   const readOnly = !canEdit && isEditing
 
@@ -73,10 +71,10 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
   }, [open, task])
 
   const handleAddNewSubject = async () => {
-    if (!newSubjectName.trim() || !user?.id) return
+    if (!newSubjectName.trim() || !board?.id) return
 
     try {
-      const newSubject = await addSubject(user.id, newSubjectName.trim())
+      const newSubject = await addSubject(board.id, newSubjectName.trim())
       setSubjectId(newSubject.id)
       setShowNewSubject(false)
       setNewSubjectName('')

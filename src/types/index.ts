@@ -32,7 +32,8 @@ export interface Board {
 
 export interface Subject {
   id: string
-  userId: string
+  boardId: string
+  userId?: string | null
   name: string
   color: string | null
   createdAt: string

@@ -27,7 +27,7 @@ interface BoardState {
   switchBoard: (userId: string, boardId: string) => Promise<void>
   createBoard: (userId: string, title: string) => Promise<Board>
   createDefaultColumns: (boardId: string) => Promise<void>
-  createDefaultSubjects: (userId: string) => Promise<void>
+  createDefaultSubjects: (boardId: string) => Promise<void>
 
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Task>
   updateTask: (id: string, updates: Partial<Task>) => Promise<void>
@@ -35,8 +35,7 @@ interface BoardState {
   moveTask: (taskId: string, newColumnId: string, newPosition: number) => Promise<void>
   reorderTasks: (columnId: string, taskIds: string[]) => Promise<void>
 
-  addSubject: (userId: string, name: string, color?: string) => Promise<Subject>
-  fetchSubjects: (userId: string) => Promise<void>
+  addSubject: (boardId: string, name: string, color?: string) => Promise<Subject>
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -167,7 +166,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       if (!board) {
         board = await get().createBoard(userId, 'Моя доска')
         await get().createDefaultColumns(board.id)
-        await get().createDefaultSubjects(userId)
+        await get().createDefaultSubjects(board.id)
         // Refresh available boards after creating
         await get().fetchAvailableBoards(userId)
       }
@@ -208,12 +207,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       // Save selected board to localStorage
       localStorage.setItem('selectedBoardId', board.id)
 
-      // Fetch subjects for the board owner (not current user)
-      const boardOwnerId = board.user_id as string
+      // Fetch subjects for the board
       const { data: subjectsData } = await supabase
         .from('subjects')
         .select('*')
-        .eq('user_id', boardOwnerId)
+        .eq('board_id', board.id)
         .order('name')
 
       set({
@@ -252,7 +250,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     if (error) throw error
   },
 
-  createDefaultSubjects: async (userId: string) => {
+  createDefaultSubjects: async (boardId: string) => {
     const defaultSubjects = [
       { name: 'Математика', color: '#3b82f6' },
       { name: 'Русский язык', color: '#ef4444' },
@@ -268,7 +266,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     await supabase
       .from('subjects')
-      .insert(defaultSubjects.map(s => ({ ...s, user_id: userId })))
+      .insert(defaultSubjects.map(s => ({ ...s, board_id: boardId })))
   },
 
   addTask: async (task) => {
@@ -384,10 +382,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }
   },
 
-  addSubject: async (userId: string, name: string, color?: string) => {
+  addSubject: async (boardId: string, name: string, color?: string) => {
     const { data, error } = await supabase
       .from('subjects')
-      .insert({ user_id: userId, name, color })
+      .insert({ board_id: boardId, name, color })
       .select()
       .single()
 
@@ -396,42 +394,6 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const newSubject = mapSubject(data)
     set((state) => ({ subjects: [...state.subjects, newSubject] }))
     return newSubject
-  },
-
-  fetchSubjects: async (userId: string) => {
-    const { data, error } = await supabase
-      .from('subjects')
-      .select('*')
-      .eq('user_id', userId)
-      .order('name')
-
-    if (error) throw error
-
-    // If no subjects exist, create default school subjects
-    if (!data || data.length === 0) {
-      const defaultSubjects = [
-        { name: 'Математика', color: '#3b82f6' },
-        { name: 'Русский язык', color: '#ef4444' },
-        { name: 'Литература', color: '#a855f7' },
-        { name: 'Английский язык', color: '#22c55e' },
-        { name: 'История', color: '#f59e0b' },
-        { name: 'Физика', color: '#06b6d4' },
-        { name: 'Химия', color: '#ec4899' },
-        { name: 'Биология', color: '#84cc16' },
-        { name: 'География', color: '#14b8a6' },
-        { name: 'Информатика', color: '#6366f1' },
-      ]
-
-      const { data: created, error: createError } = await supabase
-        .from('subjects')
-        .insert(defaultSubjects.map(s => ({ ...s, user_id: userId })))
-        .select()
-
-      if (createError) throw createError
-      set({ subjects: created?.map(mapSubject) || [] })
-    } else {
-      set({ subjects: data.map(mapSubject) })
-    }
   },
 }))
 
@@ -474,7 +436,8 @@ function mapTask(data: Record<string, unknown>): Task {
 function mapSubject(data: Record<string, unknown>): Subject {
   return {
     id: data.id as string,
-    userId: data.user_id as string,
+    boardId: data.board_id as string,
+    userId: data.user_id as string | null,
     name: data.name as string,
     color: data.color as string | null,
     createdAt: data.created_at as string,
