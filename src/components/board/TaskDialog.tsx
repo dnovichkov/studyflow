@@ -280,13 +280,33 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
 
           <div className="space-y-2">
             <Label htmlFor="deadline">Дедлайн</Label>
-            <Input
-              id="deadline"
-              type="datetime-local"
-              value={deadline}
-              onChange={(e) => setDeadline(e.target.value)}
-              disabled={loading || readOnly}
-            />
+            <div className="flex gap-2">
+              <Input
+                id="deadline"
+                type="datetime-local"
+                value={deadline}
+                onChange={(e) => setDeadline(e.target.value)}
+                disabled={loading || readOnly}
+                className="flex-1"
+              />
+              {!readOnly && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const tomorrow = new Date()
+                    tomorrow.setDate(tomorrow.getDate() + 1)
+                    tomorrow.setHours(23, 59, 0, 0)
+                    const formatted = tomorrow.toISOString().slice(0, 16)
+                    setDeadline(formatted)
+                  }}
+                  disabled={loading}
+                >
+                  На завтра
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center space-x-2">
