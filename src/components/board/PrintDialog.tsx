@@ -279,6 +279,7 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
               ${priorityMarker ? `<span class="priority">${priorityMarker}</span>` : ''}
               <span class="title">${escapeHtml(task.title)}</span>
               ${meta ? `<span class="meta">${meta}</span>` : ''}
+              ${task.description ? `<div class="description">${escapeHtml(task.description)}</div>` : ''}
             </div>
           </div>
         `
@@ -375,6 +376,14 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
       font-size: 10pt;
       margin-left: 6px;
     }
+    .description {
+      font-size: 9pt;
+      color: #555;
+      margin-top: 4px;
+      line-height: 1.3;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
     @media print {
       body {
         padding: 0;
@@ -469,17 +478,24 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
                     <div key={task.id} className="flex items-start gap-2 pl-1 text-sm">
                       <span className="inline-block w-3.5 h-3.5 border border-gray-400 rounded-sm mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
-                        <span className="font-medium">
-                          {priorityMarker && (
-                            <span className="text-red-600 mr-1">{priorityMarker}</span>
-                          )}
-                          {task.title}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-1">
-                          {subjectName && <span>[{subjectName}]</span>}
-                          {columnName && <span className="ml-1">[{columnName}]</span>}
-                          {deadline && <span className="ml-1">— {deadline}</span>}
-                        </span>
+                        <div>
+                          <span className="font-medium">
+                            {priorityMarker && (
+                              <span className="text-red-600 mr-1">{priorityMarker}</span>
+                            )}
+                            {task.title}
+                          </span>
+                          <span className="text-xs text-muted-foreground ml-1">
+                            {subjectName && <span>[{subjectName}]</span>}
+                            {columnName && <span className="ml-1">[{columnName}]</span>}
+                            {deadline && <span className="ml-1">— {deadline}</span>}
+                          </span>
+                        </div>
+                        {task.description && (
+                          <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                            {task.description}
+                          </p>
+                        )}
                       </div>
                     </div>
                   )
