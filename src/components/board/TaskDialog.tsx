@@ -21,7 +21,7 @@ import {
 import { useBoardStore } from '@/stores/boardStore'
 import type { Task, Priority } from '@/types'
 import { PRIORITY_LABELS } from '@/types'
-import { Plus } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 
 interface TaskDialogProps {
   open: boolean
@@ -288,6 +288,18 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
                 disabled={loading || readOnly}
                 className="flex-1"
               />
+              {!readOnly && deadline && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  className="shrink-0"
+                  onClick={() => setDeadline('')}
+                  disabled={loading}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
               {!readOnly && (
                 <Button
                   type="button"
