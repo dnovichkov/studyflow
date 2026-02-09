@@ -94,7 +94,11 @@ export function TaskCard({ task, subject, onClick }: TaskCardProps) {
 function formatDeadline(deadline: string, completedAt?: string | null): string {
   const date = new Date(deadline)
   const referenceDate = completedAt ? new Date(completedAt) : new Date()
-  const diffDays = Math.ceil((date.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24))
+
+  // Compare calendar days to avoid rounding issues with time-of-day
+  const deadlineDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+  const referenceDay = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate())
+  const diffDays = Math.round((deadlineDay.getTime() - referenceDay.getTime()) / (1000 * 60 * 60 * 24))
 
   if (completedAt) {
     if (diffDays < 0) {
