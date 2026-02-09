@@ -10,6 +10,7 @@ export interface Task {
   priority: Priority
   position: number
   isRepeat: boolean
+  completedAt: string | null
   createdAt: string
   updatedAt: string
 }

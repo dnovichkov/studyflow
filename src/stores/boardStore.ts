@@ -313,6 +313,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     if (updates.priority !== undefined) dbUpdates.priority = updates.priority
     if (updates.position !== undefined) dbUpdates.position = updates.position
     if (updates.isRepeat !== undefined) dbUpdates.is_repeat = updates.isRepeat
+    if (updates.completedAt !== undefined) dbUpdates.completed_at = updates.completedAt
 
     const { error } = await supabase.from('tasks').update(dbUpdates).eq('id', id)
 
@@ -355,15 +356,28 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       }
     }
 
+    // Determine completedAt based on target column
+    const targetColumn = columns.find((c) => c.id === targetColumnId)
+    const previousColumn = task ? columns.find((c) => c.id === task.columnId) : null
+    const isDoneColumn = targetColumn?.title === 'Готово'
+    const wasDone = previousColumn?.title === 'Готово'
+
+    let completedAt = task?.completedAt ?? null
+    if (isDoneColumn && !wasDone) {
+      completedAt = new Date().toISOString()
+    } else if (!isDoneColumn && wasDone) {
+      completedAt = null
+    }
+
     set((state) => ({
       tasks: state.tasks.map((t) =>
-        t.id === taskId ? { ...t, columnId: targetColumnId, position: targetPosition } : t
+        t.id === taskId ? { ...t, columnId: targetColumnId, position: targetPosition, completedAt } : t
       ),
     }))
 
     const { error } = await supabase
       .from('tasks')
-      .update({ column_id: targetColumnId, position: targetPosition })
+      .update({ column_id: targetColumnId, position: targetPosition, completed_at: completedAt })
       .eq('id', taskId)
 
     if (error) {
@@ -459,6 +473,7 @@ function mapTask(data: Record<string, unknown>): Task {
     priority: data.priority as Priority,
     position: data.position as number,
     isRepeat: (data.is_repeat as boolean) ?? false,
+    completedAt: data.completed_at as string | null,
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,
   }

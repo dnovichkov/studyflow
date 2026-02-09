@@ -12,7 +12,7 @@ interface TaskCardProps {
   onClick?: () => void
 }
 
-export function TaskCard({ task, subject, columnTitle, onClick }: TaskCardProps) {
+export function TaskCard({ task, subject, onClick }: TaskCardProps) {
   const {
     attributes,
     listeners,
@@ -28,7 +28,8 @@ export function TaskCard({ task, subject, columnTitle, onClick }: TaskCardProps)
     touchAction: 'none',
   }
 
-  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && columnTitle !== 'Готово'
+  const isOverdue = task.deadline && new Date(task.deadline) < new Date() && !task.completedAt
+  const isCompletedLate = task.completedAt && task.deadline && new Date(task.deadline) < new Date(task.completedAt)
 
   return (
     <Card
@@ -72,8 +73,11 @@ export function TaskCard({ task, subject, columnTitle, onClick }: TaskCardProps)
             </span>
           )}
           {task.deadline && (
-            <span className={cn(isOverdue && 'text-destructive font-medium')}>
-              {formatDeadline(task.deadline)}
+            <span className={cn(
+              isOverdue && 'text-destructive font-medium',
+              isCompletedLate && 'text-yellow-600 dark:text-yellow-400'
+            )}>
+              {formatDeadline(task.deadline, task.completedAt)}
             </span>
           )}
           {task.isRepeat && (
@@ -87,10 +91,17 @@ export function TaskCard({ task, subject, columnTitle, onClick }: TaskCardProps)
   )
 }
 
-function formatDeadline(deadline: string): string {
+function formatDeadline(deadline: string, completedAt?: string | null): string {
   const date = new Date(deadline)
-  const now = new Date()
-  const diffDays = Math.ceil((date.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+  const referenceDate = completedAt ? new Date(completedAt) : new Date()
+  const diffDays = Math.ceil((date.getTime() - referenceDate.getTime()) / (1000 * 60 * 60 * 24))
+
+  if (completedAt) {
+    if (diffDays < 0) {
+      return `Сдано с опозданием ${Math.abs(diffDays)} дн.`
+    }
+    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  }
 
   if (diffDays < 0) {
     return `Просрочено ${Math.abs(diffDays)} дн.`

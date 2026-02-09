@@ -14,6 +14,7 @@ function mapTask(data: Record<string, unknown>): Task {
     priority: data.priority as 'low' | 'medium' | 'high',
     position: data.position as number,
     isRepeat: (data.is_repeat as boolean) ?? false,
+    completedAt: data.completed_at as string | null,
     createdAt: data.created_at as string,
     updatedAt: data.updated_at as string,
   }

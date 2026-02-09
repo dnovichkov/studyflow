@@ -120,6 +120,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
           priority,
           position: maxPosition + 1,
           isRepeat,
+          completedAt: null,
         })
       }
       onOpenChange(false)
