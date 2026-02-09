@@ -2,6 +2,12 @@ import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import type { Board, Column, Task, Subject, Priority } from '@/types'
 
+export const SUBJECT_COLORS = [
+  '#3b82f6', '#ef4444', '#a855f7', '#22c55e', '#f59e0b',
+  '#06b6d4', '#ec4899', '#84cc16', '#14b8a6', '#6366f1',
+  '#f97316', '#64748b',
+]
+
 type UserRole = 'owner' | 'editor' | 'viewer'
 
 interface AvailableBoard {
@@ -36,6 +42,8 @@ interface BoardState {
   reorderTasks: (columnId: string, taskIds: string[]) => Promise<void>
 
   addSubject: (boardId: string, name: string, color?: string) => Promise<Subject>
+  updateSubject: (id: string, updates: { name?: string; color?: string | null }) => Promise<void>
+  deleteSubject: (id: string) => Promise<void>
 }
 
 export const useBoardStore = create<BoardState>((set, get) => ({
@@ -386,9 +394,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   addSubject: async (boardId: string, name: string, color?: string) => {
+    const assignedColor = color ?? SUBJECT_COLORS[get().subjects.length % SUBJECT_COLORS.length]
     const { data, error } = await supabase
       .from('subjects')
-      .insert({ board_id: boardId, name, color })
+      .insert({ board_id: boardId, name, color: assignedColor })
       .select()
       .single()
 
@@ -397,6 +406,25 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const newSubject = mapSubject(data)
     set((state) => ({ subjects: [...state.subjects, newSubject] }))
     return newSubject
+  },
+
+  updateSubject: async (id: string, updates: { name?: string; color?: string | null }) => {
+    const { error } = await supabase.from('subjects').update(updates).eq('id', id)
+    if (error) throw error
+
+    set((state) => ({
+      subjects: state.subjects.map((s) => (s.id === id ? { ...s, ...updates } : s)),
+    }))
+  },
+
+  deleteSubject: async (id: string) => {
+    const { error } = await supabase.from('subjects').delete().eq('id', id)
+    if (error) throw error
+
+    set((state) => ({
+      subjects: state.subjects.filter((s) => s.id !== id),
+      tasks: state.tasks.map((t) => (t.subjectId === id ? { ...t, subjectId: null } : t)),
+    }))
   },
 }))
 

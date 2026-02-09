@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MenuIcon, MoonIcon, SunIcon, PrinterIcon } from 'lucide-react'
+import { MenuIcon, MoonIcon, SunIcon, PrinterIcon, PaletteIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/sheet'
 import { ShareDialog } from '@/components/board/ShareDialog'
 import { PrintDialog } from '@/components/board/PrintDialog'
+import { SubjectsDialog } from '@/components/board/SubjectsDialog'
 import { BoardSwitcher } from '@/components/board/BoardSwitcher'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoardStore } from '@/stores/boardStore'
@@ -30,6 +31,7 @@ export function Header() {
   const navigate = useNavigate()
   const [shareOpen, setShareOpen] = useState(false)
   const [printOpen, setPrintOpen] = useState(false)
+  const [subjectsOpen, setSubjectsOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   const handleSignOut = async () => {
@@ -59,6 +61,10 @@ export function Header() {
         <div className="hidden md:flex items-center gap-2">
           {board && (
             <>
+              <Button variant="outline" size="sm" onClick={() => setSubjectsOpen(true)}>
+                <PaletteIcon className="h-4 w-4 mr-2" />
+                Предметы
+              </Button>
               <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
                 <PrinterIcon className="h-4 w-4 mr-2" />
                 Печать
@@ -129,6 +135,17 @@ export function Header() {
                       className="justify-start"
                       onClick={() => {
                         setMobileMenuOpen(false)
+                        setSubjectsOpen(true)
+                      }}
+                    >
+                      <PaletteIcon className="h-4 w-4 mr-2" />
+                      Предметы
+                    </Button>
+                    <Button
+                      variant="outline"
+                      className="justify-start"
+                      onClick={() => {
+                        setMobileMenuOpen(false)
                         setPrintOpen(true)
                       }}
                     >
@@ -192,6 +209,10 @@ export function Header() {
           <PrintDialog
             open={printOpen}
             onOpenChange={setPrintOpen}
+          />
+          <SubjectsDialog
+            open={subjectsOpen}
+            onOpenChange={setSubjectsOpen}
           />
         </>
       )}
