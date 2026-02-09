@@ -266,7 +266,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     await supabase
       .from('subjects')
-      .insert(defaultSubjects.map(s => ({ ...s, board_id: boardId })))
+      .upsert(defaultSubjects.map(s => ({ ...s, board_id: boardId })), {
+        onConflict: 'board_id,name',
+        ignoreDuplicates: true,
+      })
   },
 
   addTask: async (task) => {
