@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
+import i18n from '@/i18n'
 import type { Board, Column, Task, Subject, Priority } from '@/types'
 
 export const SUBJECT_COLORS = [
@@ -182,7 +183,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       // If still no board, create a new one
       if (!board) {
-        board = await get().createBoard(userId, 'Моя доска')
+        board = await get().createBoard(userId, i18n.t('defaults.boardName'))
         await get().createDefaultColumns(board.id)
         await get().createDefaultSubjects(board.id)
         // Refresh available boards after creating
@@ -265,30 +266,23 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   createDefaultColumns: async (boardId: string) => {
-    const defaultColumns = [
-      { board_id: boardId, title: 'Задали', position: 0 },
-      { board_id: boardId, title: 'Делаю', position: 1 },
-      { board_id: boardId, title: 'Готово', position: 2 },
-      { board_id: boardId, title: 'Повторить', position: 3 },
-    ]
+    const columnNames = i18n.t('defaults.columns', { returnObjects: true }) as string[]
+    const defaultColumns = columnNames.map((title, position) => ({
+      board_id: boardId,
+      title,
+      position,
+    }))
 
     const { error } = await supabase.from('columns').insert(defaultColumns)
     if (error) throw error
   },
 
   createDefaultSubjects: async (boardId: string) => {
-    const defaultSubjects = [
-      { name: 'Математика', color: '#3b82f6' },
-      { name: 'Русский язык', color: '#ef4444' },
-      { name: 'Литература', color: '#a855f7' },
-      { name: 'Английский язык', color: '#22c55e' },
-      { name: 'История', color: '#f59e0b' },
-      { name: 'Физика', color: '#06b6d4' },
-      { name: 'Химия', color: '#ec4899' },
-      { name: 'Биология', color: '#84cc16' },
-      { name: 'География', color: '#14b8a6' },
-      { name: 'Информатика', color: '#6366f1' },
-    ]
+    const subjectNames = i18n.t('defaults.subjects', { returnObjects: true }) as string[]
+    const defaultSubjects = subjectNames.map((name, i) => ({
+      name,
+      color: SUBJECT_COLORS[i % SUBJECT_COLORS.length],
+    }))
 
     await supabase
       .from('subjects')
@@ -356,17 +350,17 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     const task = state.tasks.find((t) => t.id === taskId)
     const columns = state.columns
 
-    // Auto-move logic: if task is marked as repeat and moved to "Готово", redirect to "Повторить"
+    // Auto-move logic: if task is marked as repeat and moved to "Done" (position 2), redirect to "Repeat" (position 3)
     let targetColumnId = newColumnId
     let targetPosition = newPosition
 
     if (task?.isRepeat) {
       const targetColumn = columns.find((c) => c.id === newColumnId)
-      const repeatColumn = columns.find((c) => c.title === 'Повторить')
+      const repeatColumn = columns.find((c) => c.position === 3)
 
-      if (targetColumn?.title === 'Готово' && repeatColumn) {
+      if (targetColumn?.position === 2 && repeatColumn) {
         targetColumnId = repeatColumn.id
-        // Calculate position at the end of "Повторить" column
+        // Calculate position at the end of "Repeat" column
         const repeatTasks = state.tasks.filter((t) => t.columnId === repeatColumn.id)
         targetPosition = repeatTasks.length > 0
           ? Math.max(...repeatTasks.map((t) => t.position)) + 1
@@ -374,11 +368,11 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       }
     }
 
-    // Determine completedAt based on target column
+    // Determine completedAt based on target column (position 2 = done column)
     const targetColumn = columns.find((c) => c.id === targetColumnId)
     const previousColumn = task ? columns.find((c) => c.id === task.columnId) : null
-    const isDoneColumn = targetColumn?.title === 'Готово'
-    const wasDone = previousColumn?.title === 'Готово'
+    const isDoneColumn = targetColumn?.position === 2
+    const wasDone = previousColumn?.position === 2
 
     let completedAt = task?.completedAt ?? null
     if (isDoneColumn && !wasDone) {

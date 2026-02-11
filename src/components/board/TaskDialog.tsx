@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -20,8 +21,9 @@ import {
 } from '@/components/ui/select'
 import { useBoardStore } from '@/stores/boardStore'
 import type { Task, Priority } from '@/types'
-import { PRIORITY_LABELS } from '@/types'
 import { Plus, X } from 'lucide-react'
+
+const PRIORITIES: Priority[] = ['low', 'medium', 'high']
 
 interface TaskDialogProps {
   open: boolean
@@ -32,6 +34,7 @@ interface TaskDialogProps {
 }
 
 export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true }: TaskDialogProps) {
+  const { t } = useTranslation()
   const { board, subjects, tasks, addTask, updateTask, deleteTask, addSubject } = useBoardStore()
   const isEditing = !!task
   const readOnly = !canEdit && isEditing
@@ -79,14 +82,14 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
       setShowNewSubject(false)
       setNewSubjectName('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка создания предмета')
+      setError(err instanceof Error ? err.message : t('task.subjectCreateError'))
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!title.trim()) {
-      setError('Введите название задания')
+      setError(t('task.titleRequired'))
       return
     }
 
@@ -125,21 +128,21 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
       }
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения')
+      setError(err instanceof Error ? err.message : t('task.saveError'))
     } finally {
       setLoading(false)
     }
   }
 
   const handleDelete = async () => {
-    if (!task || !confirm('Удалить это задание?')) return
+    if (!task || !confirm(t('task.deleteConfirm'))) return
 
     setLoading(true)
     try {
       await deleteTask(task.id)
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления')
+      setError(err instanceof Error ? err.message : t('task.deleteError'))
     } finally {
       setLoading(false)
     }
@@ -150,7 +153,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>
-            {isEditing ? 'Редактировать задание' : 'Новое задание'}
+            {isEditing ? t('task.editTask') : t('task.newTask')}
           </DialogTitle>
         </DialogHeader>
 
@@ -162,23 +165,23 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="title">Название {!readOnly && '*'}</Label>
+            <Label htmlFor="title">{t('task.titleLabel')} {!readOnly && '*'}</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Что нужно сделать?"
+              placeholder={t('task.titlePlaceholder')}
               disabled={loading || readOnly}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="description">Описание</Label>
+            <Label htmlFor="description">{t('task.descriptionLabel')}</Label>
             <Textarea
               id="description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Подробности задания..."
+              placeholder={t('task.descriptionPlaceholder')}
               rows={3}
               disabled={loading || readOnly}
             />
@@ -186,13 +189,13 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
 
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="subject">Предмет</Label>
+              <Label htmlFor="subject">{t('task.subjectLabel')}</Label>
               {showNewSubject ? (
                 <div className="flex gap-2">
                   <Input
                     value={newSubjectName}
                     onChange={(e) => setNewSubjectName(e.target.value)}
-                    placeholder="Название предмета"
+                    placeholder={t('task.subjectNamePlaceholder')}
                     disabled={loading}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -228,10 +231,10 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
                   disabled={loading || readOnly}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Выберите..." />
+                    <SelectValue placeholder={t('task.subjectPlaceholder')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Без предмета</SelectItem>
+                    <SelectItem value="none">{t('task.noSubject')}</SelectItem>
                     {subjects.map((s) => (
                       <SelectItem key={s.id} value={s.id}>
                         <span className="flex items-center gap-2">
@@ -248,7 +251,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
                     <SelectItem value="new" className="text-primary">
                       <span className="flex items-center gap-2">
                         <Plus className="h-3 w-3" />
-                        Добавить предмет...
+                        {t('task.addSubject')}
                       </span>
                     </SelectItem>
                   </SelectContent>
@@ -257,7 +260,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="priority">Приоритет</Label>
+              <Label htmlFor="priority">{t('task.priorityLabel')}</Label>
               <Select
                 value={priority}
                 onValueChange={(v) => setPriority(v as Priority)}
@@ -267,9 +270,9 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                  {PRIORITIES.map((value) => (
                     <SelectItem key={value} value={value}>
-                      {label}
+                      {t(`task.priority.${value}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -278,7 +281,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="deadline">Дедлайн</Label>
+            <Label htmlFor="deadline">{t('task.deadlineLabel')}</Label>
             <div className="flex gap-2">
               <Input
                 id="deadline"
@@ -314,7 +317,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
                   }}
                   disabled={loading}
                 >
-                  На завтра
+                  {t('task.deadlineTomorrow')}
                 </Button>
               )}
             </div>
@@ -328,7 +331,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
               disabled={loading || readOnly}
             />
             <Label htmlFor="isRepeat" className="text-sm font-normal cursor-pointer">
-              Повторять (задание будет перемещено в колонку "Повторить" после выполнения)
+              {t('task.repeatLabel')}
             </Label>
           </div>
 
@@ -341,15 +344,15 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
                 disabled={loading}
                 className="mr-auto"
               >
-                Удалить
+                {t('common.delete')}
               </Button>
             )}
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-              {readOnly ? 'Закрыть' : 'Отмена'}
+              {readOnly ? t('common.close') : t('common.cancel')}
             </Button>
             {!readOnly && (
               <Button type="submit" disabled={loading}>
-                {loading ? 'Сохранение...' : isEditing ? 'Сохранить' : 'Создать'}
+                {loading ? t('common.saving') : isEditing ? t('common.save') : t('task.create')}
               </Button>
             )}
           </DialogFooter>

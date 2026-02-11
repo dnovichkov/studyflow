@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/select'
 import { useBoardStore } from '@/stores/boardStore'
 import type { Task, Subject, Column } from '@/types'
+import type { TFunction } from 'i18next'
 
 interface PrintDialogProps {
   open: boolean
@@ -26,7 +28,7 @@ interface PrintDialogProps {
 
 type GroupBy = 'subject' | 'deadline' | 'column'
 
-function formatPrintDeadline(deadline: string | null): string {
+function formatPrintDeadline(deadline: string | null, t: TFunction, locale: string): string {
   if (!deadline) return ''
   const date = new Date(deadline)
   const now = new Date()
@@ -36,10 +38,10 @@ function formatPrintDeadline(deadline: string | null): string {
   const isToday = date.toDateString() === now.toDateString()
   const isTomorrow = date.toDateString() === tomorrow.toDateString()
 
-  if (isToday) return 'Сегодня'
-  if (isTomorrow) return 'Завтра'
+  if (isToday) return t('deadline.today')
+  if (isTomorrow) return t('deadline.tomorrow')
 
-  return date.toLocaleDateString('ru-RU', {
+  return date.toLocaleDateString(locale, {
     day: 'numeric',
     month: 'short',
     weekday: 'short',
@@ -47,7 +49,7 @@ function formatPrintDeadline(deadline: string | null): string {
 }
 
 function getIncompleteTasks(tasks: Task[], columns: Column[]): Task[] {
-  const doneColumn = columns.find((c) => c.title === 'Готово')
+  const doneColumn = columns.find((c) => c.position === 2)
   if (!doneColumn) return tasks
   return tasks.filter((t) => t.columnId !== doneColumn.id)
 }
@@ -72,10 +74,10 @@ interface GroupedTasks {
   tasks: Task[]
 }
 
-function groupBySubject(tasks: Task[], subjects: Subject[]): GroupedTasks[] {
+function groupBySubject(tasks: Task[], subjects: Subject[], noSubjectLabel: string): GroupedTasks[] {
   const groups = new Map<string, GroupedTasks>()
 
-  groups.set('none', { key: 'none', label: 'Без предмета', color: null, tasks: [] })
+  groups.set('none', { key: 'none', label: noSubjectLabel, color: null, tasks: [] })
 
   subjects.forEach((s) => {
     groups.set(s.id, { key: s.id, label: s.name, color: s.color, tasks: [] })
@@ -100,23 +102,23 @@ function groupBySubject(tasks: Task[], subjects: Subject[]): GroupedTasks[] {
   return result.sort((a, b) => {
     if (a.key === 'none') return 1
     if (b.key === 'none') return -1
-    return a.label.localeCompare(b.label, 'ru')
+    return a.label.localeCompare(b.label)
   })
 }
 
 function groupByColumn(tasks: Task[], columns: Column[]): GroupedTasks[] {
-  const columnOrder = ['Задали', 'Делаю', 'Повторить']
+  const positions = [0, 1, 3]
   const result: GroupedTasks[] = []
 
-  columnOrder.forEach((title) => {
-    const column = columns.find((c) => c.title === title)
+  positions.forEach((pos) => {
+    const column = columns.find((c) => c.position === pos)
     if (!column) return
 
     const columnTasks = tasks.filter((t) => t.columnId === column.id)
     if (columnTasks.length > 0) {
       result.push({
         key: column.id,
-        label: title,
+        label: column.title,
         color: null,
         tasks: sortTasks(columnTasks),
       })
@@ -126,7 +128,7 @@ function groupByColumn(tasks: Task[], columns: Column[]): GroupedTasks[] {
   return result
 }
 
-function groupByDeadline(tasks: Task[]): GroupedTasks[] {
+function groupByDeadline(tasks: Task[], t: TFunction): GroupedTasks[] {
   const now = new Date()
   now.setHours(0, 0, 0, 0)
 
@@ -168,22 +170,22 @@ function groupByDeadline(tasks: Task[]): GroupedTasks[] {
   const result: GroupedTasks[] = []
 
   if (overdue.length > 0) {
-    result.push({ key: 'overdue', label: 'Просрочено', color: '#ef4444', tasks: sortTasks(overdue) })
+    result.push({ key: 'overdue', label: t('print.deadlineCategory.overdue'), color: '#ef4444', tasks: sortTasks(overdue) })
   }
   if (today.length > 0) {
-    result.push({ key: 'today', label: 'Сегодня', color: '#f97316', tasks: sortTasks(today) })
+    result.push({ key: 'today', label: t('print.deadlineCategory.today'), color: '#f97316', tasks: sortTasks(today) })
   }
   if (tomorrowTasks.length > 0) {
-    result.push({ key: 'tomorrow', label: 'Завтра', color: '#eab308', tasks: sortTasks(tomorrowTasks) })
+    result.push({ key: 'tomorrow', label: t('print.deadlineCategory.tomorrow'), color: '#eab308', tasks: sortTasks(tomorrowTasks) })
   }
   if (thisWeek.length > 0) {
-    result.push({ key: 'week', label: 'На этой неделе', color: '#22c55e', tasks: sortTasks(thisWeek) })
+    result.push({ key: 'week', label: t('print.deadlineCategory.thisWeek'), color: '#22c55e', tasks: sortTasks(thisWeek) })
   }
   if (later.length > 0) {
-    result.push({ key: 'later', label: 'Позже', color: '#3b82f6', tasks: sortTasks(later) })
+    result.push({ key: 'later', label: t('print.deadlineCategory.later'), color: '#3b82f6', tasks: sortTasks(later) })
   }
   if (noDeadline.length > 0) {
-    result.push({ key: 'none', label: 'Без срока', color: null, tasks: sortTasks(noDeadline) })
+    result.push({ key: 'none', label: t('print.deadlineCategory.noDeadline'), color: null, tasks: sortTasks(noDeadline) })
   }
 
   return result
@@ -208,9 +210,28 @@ function escapeHtml(text: string): string {
     .replace(/"/g, '&quot;')
 }
 
+// Builds print HTML and opens in a new window for printing
+// Uses document.write on the print window which is the standard approach for print dialogs
+function openPrintWindow(html: string) {
+  const printWindow = window.open('', '_blank', 'width=800,height=600')
+  if (printWindow) {
+    printWindow.document.open()
+    printWindow.document.writeln(html)
+    printWindow.document.close()
+    printWindow.focus()
+    setTimeout(() => {
+      printWindow.print()
+      printWindow.close()
+    }, 250)
+  }
+}
+
 export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
+  const { t, i18n } = useTranslation()
   const { tasks, columns, subjects } = useBoardStore()
   const [groupBy, setGroupBy] = useState<GroupBy>('subject')
+
+  const locale = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
 
   const incompleteTasks = useMemo(
     () => getIncompleteTasks(tasks, columns),
@@ -220,15 +241,15 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
   const groupedTasks = useMemo(() => {
     switch (groupBy) {
       case 'subject':
-        return groupBySubject(incompleteTasks, subjects)
+        return groupBySubject(incompleteTasks, subjects, t('print.noSubject'))
       case 'column':
         return groupByColumn(incompleteTasks, columns)
       case 'deadline':
-        return groupByDeadline(incompleteTasks)
+        return groupByDeadline(incompleteTasks, t)
       default:
-        return groupBySubject(incompleteTasks, subjects)
+        return groupBySubject(incompleteTasks, subjects, t('print.noSubject'))
     }
-  }, [incompleteTasks, subjects, columns, groupBy])
+  }, [incompleteTasks, subjects, columns, groupBy, t])
 
   const getColumnName = (columnId: string): string => {
     return columns.find((c) => c.id === columnId)?.title || ''
@@ -240,7 +261,7 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
   }
 
   const handlePrint = () => {
-    const currentDate = new Date().toLocaleDateString('ru-RU', {
+    const currentDate = new Date().toLocaleDateString(locale, {
       weekday: 'long',
       day: 'numeric',
       month: 'long',
@@ -265,7 +286,7 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
         const priorityMarker = getPriorityMarker(task.priority)
         const subjectName = groupBy !== 'subject' ? getSubjectName(task.subjectId) : null
         const columnName = groupBy !== 'column' ? getColumnName(task.columnId) : null
-        const deadline = groupBy !== 'deadline' ? formatPrintDeadline(task.deadline) : null
+        const deadline = groupBy !== 'deadline' ? formatPrintDeadline(task.deadline, t, locale) : null
 
         let meta = ''
         if (subjectName) meta += `[${escapeHtml(subjectName)}] `
@@ -288,134 +309,49 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
       tasksHtml += '</div></div>'
     })
 
-    const html = `
-<!DOCTYPE html>
-<html lang="ru">
+    const myTasksTitle = escapeHtml(t('print.myTasks'))
+
+    const html = `<!DOCTYPE html>
+<html lang="${i18n.language}">
 <head>
   <meta charset="UTF-8">
-  <title>Мои задания</title>
+  <title>${myTasksTitle}</title>
   <style>
-    @page {
-      margin: 20mm 25mm;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-size: 12pt;
-      line-height: 1.4;
-      color: #000;
-      padding: 10px 15px;
-      max-width: 700px;
-      margin: 0 auto;
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 24px;
-    }
-    .header h1 {
-      font-size: 20pt;
-      font-weight: bold;
-      margin-bottom: 4px;
-    }
-    .header .date {
-      font-size: 11pt;
-      color: #555;
-      text-transform: capitalize;
-    }
-    .section {
-      margin-bottom: 20px;
-      page-break-inside: avoid;
-    }
-    .section-header {
-      font-size: 14pt;
-      font-weight: 600;
-      padding-bottom: 6px;
-      margin-bottom: 10px;
-      border-bottom: 2px solid #333;
-    }
-    .section-header .count {
-      font-weight: normal;
-      font-size: 11pt;
-      color: #666;
-      margin-left: 8px;
-    }
-    .tasks {
-      padding-left: 4px;
-    }
-    .task {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      margin-bottom: 10px;
-    }
-    .checkbox {
-      width: 16px;
-      height: 16px;
-      min-width: 16px;
-      border: 2px solid #000;
-      border-radius: 2px;
-      margin-top: 2px;
-    }
-    .task-content {
-      flex: 1;
-    }
-    .priority {
-      color: #dc2626;
-      font-weight: bold;
-      margin-right: 4px;
-    }
-    .title {
-      font-weight: 500;
-    }
-    .meta {
-      color: #666;
-      font-size: 10pt;
-      margin-left: 6px;
-    }
-    .description {
-      font-size: 9pt;
-      color: #555;
-      margin-top: 4px;
-      line-height: 1.3;
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-    @media print {
-      body {
-        padding: 0;
-      }
-    }
+    @page { margin: 20mm 25mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 12pt; line-height: 1.4; color: #000; padding: 10px 15px; max-width: 700px; margin: 0 auto; }
+    .header { text-align: center; margin-bottom: 24px; }
+    .header h1 { font-size: 20pt; font-weight: bold; margin-bottom: 4px; }
+    .header .date { font-size: 11pt; color: #555; text-transform: capitalize; }
+    .section { margin-bottom: 20px; page-break-inside: avoid; }
+    .section-header { font-size: 14pt; font-weight: 600; padding-bottom: 6px; margin-bottom: 10px; border-bottom: 2px solid #333; }
+    .section-header .count { font-weight: normal; font-size: 11pt; color: #666; margin-left: 8px; }
+    .tasks { padding-left: 4px; }
+    .task { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+    .checkbox { width: 16px; height: 16px; min-width: 16px; border: 2px solid #000; border-radius: 2px; margin-top: 2px; }
+    .task-content { flex: 1; }
+    .priority { color: #dc2626; font-weight: bold; margin-right: 4px; }
+    .title { font-weight: 500; }
+    .meta { color: #666; font-size: 10pt; margin-left: 6px; }
+    .description { font-size: 9pt; color: #555; margin-top: 4px; line-height: 1.3; white-space: pre-wrap; word-break: break-word; }
+    @media print { body { padding: 0; } }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Мои задания</h1>
+    <h1>${myTasksTitle}</h1>
     <div class="date">${escapeHtml(currentDate)}</div>
   </div>
   ${tasksHtml}
 </body>
-</html>
-    `
+</html>`
 
-    const printWindow = window.open('', '_blank', 'width=800,height=600')
-    if (printWindow) {
-      printWindow.document.write(html)
-      printWindow.document.close()
-      printWindow.focus()
-      setTimeout(() => {
-        printWindow.print()
-        printWindow.close()
-      }, 250)
-    }
+    openPrintWindow(html)
   }
 
   const totalTasks = incompleteTasks.length
 
-  const currentDate = new Date().toLocaleDateString('ru-RU', {
+  const currentDate = new Date().toLocaleDateString(locale, {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -425,24 +361,24 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Печать заданий</DialogTitle>
+          <DialogTitle>{t('print.title')}</DialogTitle>
           <DialogDescription>
-            Невыполненных заданий: {totalTasks}
+            {t('print.incompleteTasks', { count: totalTasks })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="flex gap-4 items-end">
             <div className="flex-1">
-              <Label htmlFor="groupBy">Группировать по</Label>
+              <Label htmlFor="groupBy">{t('print.groupBy')}</Label>
               <Select value={groupBy} onValueChange={(v) => setGroupBy(v as GroupBy)}>
                 <SelectTrigger id="groupBy">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="subject">Предмету</SelectItem>
-                  <SelectItem value="deadline">Сроку</SelectItem>
-                  <SelectItem value="column">Статусу</SelectItem>
+                  <SelectItem value="subject">{t('print.bySubject')}</SelectItem>
+                  <SelectItem value="deadline">{t('print.byDeadline')}</SelectItem>
+                  <SelectItem value="column">{t('print.byStatus')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -451,7 +387,7 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
 
         <div className="mt-4 space-y-4 border rounded-lg p-4 bg-muted/30 max-h-[300px] overflow-y-auto">
           <div className="text-center mb-4">
-            <h2 className="text-lg font-bold">Мои задания</h2>
+            <h2 className="text-lg font-bold">{t('print.myTasks')}</h2>
             <p className="text-sm text-muted-foreground capitalize">{currentDate}</p>
           </div>
 
@@ -472,7 +408,7 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
                   const priorityMarker = getPriorityMarker(task.priority)
                   const subjectName = groupBy !== 'subject' ? getSubjectName(task.subjectId) : null
                   const columnName = groupBy !== 'column' ? getColumnName(task.columnId) : null
-                  const deadline = groupBy !== 'deadline' ? formatPrintDeadline(task.deadline) : null
+                  const deadline = groupBy !== 'deadline' ? formatPrintDeadline(task.deadline, t, locale) : null
 
                   return (
                     <div key={task.id} className="flex items-start gap-2 pl-1 text-sm">
@@ -506,17 +442,17 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
 
           {totalTasks === 0 && (
             <p className="text-center text-muted-foreground py-4">
-              Нет невыполненных заданий
+              {t('print.noIncompleteTasks')}
             </p>
           )}
         </div>
 
         <DialogFooter className="mt-4">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Отмена
+            {t('common.cancel')}
           </Button>
           <Button onClick={handlePrint} disabled={totalTasks === 0}>
-            Печать
+            {t('print.printButton')}
           </Button>
         </DialogFooter>
       </DialogContent>

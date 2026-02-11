@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Header } from '@/components/layout/Header'
 import { Board } from '@/components/board/Board'
 import { WeekView } from '@/components/calendar/WeekView'
@@ -10,6 +11,7 @@ import { useRealtime } from '@/hooks/useRealtime'
 import type { Task } from '@/types'
 
 export function BoardPage() {
+  const { t } = useTranslation()
   const { user } = useAuth()
   const { board, columns, userRole, loading, error, fetchBoard } = useBoardStore()
   const canEdit = userRole === 'owner' || userRole === 'editor'
@@ -66,7 +68,7 @@ export function BoardPage() {
               onClick={() => user?.id && fetchBoard(user.id)}
               className="text-primary hover:underline"
             >
-              Попробовать снова
+              {t('common.retry')}
             </button>
           </div>
         </div>
@@ -83,8 +85,8 @@ export function BoardPage() {
         <Tabs defaultValue="board" className="w-full">
           <div className="px-4 mb-4">
             <TabsList>
-              <TabsTrigger value="board">Доска</TabsTrigger>
-              <TabsTrigger value="calendar">Календарь</TabsTrigger>
+              <TabsTrigger value="board">{t('board.board')}</TabsTrigger>
+              <TabsTrigger value="calendar">{t('board.calendar')}</TabsTrigger>
             </TabsList>
           </div>
 

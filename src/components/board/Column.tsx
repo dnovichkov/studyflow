@@ -3,6 +3,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
+import { useTranslation } from 'react-i18next'
 import { TaskCard } from './TaskCard'
 import { Button } from '@/components/ui/button'
 import type { Column as ColumnType, Task, Subject } from '@/types'
@@ -18,6 +19,7 @@ interface ColumnProps {
 }
 
 export function Column({ column, tasks, subjects, onAddTask, onTaskClick, canEdit = true }: ColumnProps) {
+  const { t } = useTranslation()
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
   })
@@ -62,7 +64,7 @@ export function Column({ column, tasks, subjects, onAddTask, onTaskClick, canEdi
           className="w-full mt-2 text-muted-foreground"
           onClick={onAddTask}
         >
-          + Добавить задание
+          {t('board.addTask')}
         </Button>
       )}
     </div>

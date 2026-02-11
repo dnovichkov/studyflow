@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 
 export function RegisterPage() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -23,7 +25,7 @@ export function RegisterPage() {
     try {
       await signInWithGoogle()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка входа через Google')
+      setError(err instanceof Error ? err.message : t('auth.signInGoogleError'))
       setLoading(false)
     }
   }
@@ -33,12 +35,12 @@ export function RegisterPage() {
     setError(null)
 
     if (password !== confirmPassword) {
-      setError('Пароли не совпадают')
+      setError(t('auth.passwordMismatch'))
       return
     }
 
     if (password.length < 6) {
-      setError('Пароль должен содержать минимум 6 символов')
+      setError(t('auth.passwordTooShort'))
       return
     }
 
@@ -47,12 +49,12 @@ export function RegisterPage() {
     try {
       const { user } = await signUp(email, password)
       if (user?.identities?.length === 0) {
-        setError('Пользователь с таким email уже существует')
+        setError(t('auth.userExists'))
       } else {
         setSuccess(true)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка регистрации')
+      setError(err instanceof Error ? err.message : t('auth.registerError'))
     } finally {
       setLoading(false)
     }
@@ -63,9 +65,9 @@ export function RegisterPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Проверьте почту</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.checkEmail')}</CardTitle>
             <CardDescription>
-              Мы отправили ссылку для подтверждения на {email}
+              {t('auth.confirmationSent', { email })}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -74,7 +76,7 @@ export function RegisterPage() {
               variant="outline"
               onClick={() => navigate('/login')}
             >
-              Вернуться к входу
+              {t('auth.backToLogin')}
             </Button>
           </CardContent>
         </Card>
@@ -86,9 +88,9 @@ export function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Регистрация</CardTitle>
+          <CardTitle className="text-2xl">{t('auth.registerTitle')}</CardTitle>
           <CardDescription>
-            Создайте аккаунт в StudyFlow
+            {t('auth.registerDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -100,7 +102,7 @@ export function RegisterPage() {
             )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
-                Email
+                {t('auth.email')}
               </label>
               <Input
                 id="email"
@@ -114,7 +116,7 @@ export function RegisterPage() {
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
-                Пароль
+                {t('auth.password')}
               </label>
               <Input
                 id="password"
@@ -128,7 +130,7 @@ export function RegisterPage() {
             </div>
             <div className="space-y-2">
               <label htmlFor="confirmPassword" className="text-sm font-medium">
-                Подтвердите пароль
+                {t('auth.confirmPassword')}
               </label>
               <Input
                 id="confirmPassword"
@@ -141,7 +143,7 @@ export function RegisterPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Регистрация...' : 'Зарегистрироваться'}
+              {loading ? t('auth.registering') : t('auth.register')}
             </Button>
           </form>
 
@@ -150,7 +152,7 @@ export function RegisterPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">или</span>
+              <span className="bg-card px-2 text-muted-foreground">{t('common.or')}</span>
             </div>
           </div>
 
@@ -179,13 +181,13 @@ export function RegisterPage() {
                 fill="#EA4335"
               />
             </svg>
-            Продолжить с Google
+            {t('auth.continueWithGoogle')}
           </Button>
 
           <div className="mt-4 text-center text-sm">
-            Уже есть аккаунт?{' '}
+            {t('auth.alreadyHaveAccount')}{' '}
             <Link to="/login" className="text-primary hover:underline">
-              Войти
+              {t('auth.signIn')}
             </Link>
           </div>
         </CardContent>

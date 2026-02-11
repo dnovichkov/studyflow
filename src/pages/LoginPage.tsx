@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 
 export function LoginPage() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +28,7 @@ export function LoginPage() {
       await signIn(email, password)
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка входа')
+      setError(err instanceof Error ? err.message : t('auth.signInError'))
     } finally {
       setLoading(false)
     }
@@ -39,7 +41,7 @@ export function LoginPage() {
     try {
       await signInWithGoogle()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка входа через Google')
+      setError(err instanceof Error ? err.message : t('auth.signInGoogleError'))
       setLoading(false)
     }
   }
@@ -50,7 +52,7 @@ export function LoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">StudyFlow</CardTitle>
           <CardDescription>
-            Войдите в свой аккаунт
+            {t('auth.signInDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -62,7 +64,7 @@ export function LoginPage() {
             )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
-                Email
+                {t('auth.email')}
               </label>
               <Input
                 id="email"
@@ -76,7 +78,7 @@ export function LoginPage() {
             </div>
             <div className="space-y-2">
               <label htmlFor="password" className="text-sm font-medium">
-                Пароль
+                {t('auth.password')}
               </label>
               <Input
                 id="password"
@@ -88,7 +90,7 @@ export function LoginPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Вход...' : 'Войти'}
+              {loading ? t('auth.signingIn') : t('auth.signIn')}
             </Button>
           </form>
 
@@ -97,7 +99,7 @@ export function LoginPage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-card px-2 text-muted-foreground">или</span>
+              <span className="bg-card px-2 text-muted-foreground">{t('common.or')}</span>
             </div>
           </div>
 
@@ -126,15 +128,15 @@ export function LoginPage() {
                 fill="#EA4335"
               />
             </svg>
-            Войти через Google
+            {t('auth.signInWithGoogle')}
           </Button>
           <div className="mt-4 text-center text-sm">
             <Link to="/register" className="text-primary hover:underline">
-              Создать аккаунт
+              {t('auth.createAccount')}
             </Link>
             {' | '}
             <Link to="/forgot-password" className="text-primary hover:underline">
-              Забыли пароль?
+              {t('auth.forgotPassword')}
             </Link>
           </div>
         </CardContent>

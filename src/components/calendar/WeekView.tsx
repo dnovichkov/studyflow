@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { useBoardStore } from '@/stores/boardStore'
@@ -11,8 +12,11 @@ interface WeekViewProps {
 }
 
 export function WeekView({ onTaskClick }: WeekViewProps) {
+  const { t, i18n } = useTranslation()
   const { tasks, subjects } = useBoardStore()
   const [weekOffset, setWeekOffset] = useState(0)
+
+  const locale = i18n.language === 'ru' ? 'ru-RU' : 'en-US'
 
   const weekDays = useMemo(() => {
     const today = new Date()
@@ -62,9 +66,9 @@ export function WeekView({ onTaskClick }: WeekViewProps) {
     const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }
 
     if (start.getMonth() === end.getMonth()) {
-      return `${start.getDate()} - ${end.toLocaleDateString('ru-RU', options)}`
+      return `${start.getDate()} - ${end.toLocaleDateString(locale, options)}`
     }
-    return `${start.toLocaleDateString('ru-RU', options)} - ${end.toLocaleDateString('ru-RU', options)}`
+    return `${start.toLocaleDateString(locale, options)} - ${end.toLocaleDateString(locale, options)}`
   }
 
   return (
@@ -77,7 +81,7 @@ export function WeekView({ onTaskClick }: WeekViewProps) {
             size="sm"
             onClick={() => setWeekOffset((o) => o - 1)}
           >
-            Назад
+            {t('calendar.back')}
           </Button>
           <Button
             variant="outline"
@@ -85,14 +89,14 @@ export function WeekView({ onTaskClick }: WeekViewProps) {
             onClick={() => setWeekOffset(0)}
             disabled={weekOffset === 0}
           >
-            Сегодня
+            {t('calendar.today')}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => setWeekOffset((o) => o + 1)}
           >
-            Вперед
+            {t('calendar.forward')}
           </Button>
         </div>
       </div>
@@ -100,7 +104,7 @@ export function WeekView({ onTaskClick }: WeekViewProps) {
       <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2 overflow-x-auto">
         {weekDays.map((date) => {
           const dayTasks = tasksByDay.get(date.toDateString()) || []
-          const dayName = date.toLocaleDateString('ru-RU', { weekday: 'short' })
+          const dayName = date.toLocaleDateString(locale, { weekday: 'short' })
           const dayNum = date.getDate()
 
           return (
@@ -149,7 +153,7 @@ export function WeekView({ onTaskClick }: WeekViewProps) {
                 })}
                 {dayTasks.length > 4 && (
                   <div className="text-xs text-center text-muted-foreground">
-                    +{dayTasks.length - 4} еще
+                    {t('calendar.more', { count: dayTasks.length - 4 })}
                   </div>
                 )}
               </div>

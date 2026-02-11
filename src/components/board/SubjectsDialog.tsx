@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ interface SubjectsDialogProps {
 }
 
 export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
+  const { t } = useTranslation()
   const { board, subjects, tasks, userRole, addSubject, updateSubject, deleteSubject } = useBoardStore()
   const canEdit = userRole === 'owner' || userRole === 'editor'
 
@@ -53,7 +55,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
       await updateSubject(editingId, { name: editName.trim(), color: editColor })
       setEditingId(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка сохранения')
+      setError(err instanceof Error ? err.message : t('subjects.saveError'))
     } finally {
       setLoading(false)
     }
@@ -62,8 +64,8 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
   const handleDelete = async (id: string, name: string) => {
     const count = getTaskCount(id)
     const message = count > 0
-      ? `Удалить предмет "${name}"? ${count} ${taskWord(count)} останется без предмета.`
-      : `Удалить предмет "${name}"?`
+      ? t('subjects.deleteConfirmWithTasks', { name, count, taskWord: t('subjects.taskWord', { count }) })
+      : t('subjects.deleteConfirm', { name })
 
     if (!confirm(message)) return
 
@@ -73,7 +75,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
       await deleteSubject(id)
       if (editingId === id) setEditingId(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка удаления')
+      setError(err instanceof Error ? err.message : t('subjects.deleteError'))
     } finally {
       setLoading(false)
     }
@@ -89,7 +91,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
       setNewColor(SUBJECT_COLORS[(subjects.length + 1) % SUBJECT_COLORS.length])
       setAdding(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка создания')
+      setError(err instanceof Error ? err.message : t('subjects.createError'))
     } finally {
       setLoading(false)
     }
@@ -99,7 +101,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle>Предметы</DialogTitle>
+          <DialogTitle>{t('subjects.title')}</DialogTitle>
         </DialogHeader>
 
         {error && (
@@ -111,7 +113,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
         <div className="space-y-1 max-h-[400px] overflow-y-auto">
           {subjects.length === 0 && (
             <p className="text-sm text-muted-foreground py-4 text-center">
-              Нет предметов
+              {t('subjects.noSubjects')}
             </p>
           )}
 
@@ -123,7 +125,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
                     <Input
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Название предмета"
+                      placeholder={t('subjects.subjectNamePlaceholder')}
                       disabled={loading}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleSaveEdit()
@@ -163,7 +165,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
                     {subject.name}
                   </span>
                   <span className="text-xs text-muted-foreground shrink-0">
-                    {getTaskCount(subject.id)} зад.
+                    {t('subjects.taskCount', { count: getTaskCount(subject.id) })}
                   </span>
                   {canEdit && (
                     <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -201,7 +203,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
                   <Input
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
-                    placeholder="Название предмета"
+                    placeholder={t('subjects.subjectNamePlaceholder')}
                     disabled={loading}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleAdd()
@@ -244,7 +246,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Добавить предмет
+                {t('subjects.addSubject')}
               </Button>
             )}
           </>
@@ -252,13 +254,4 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
       </DialogContent>
     </Dialog>
   )
-}
-
-function taskWord(count: number): string {
-  const lastTwo = count % 100
-  const lastOne = count % 10
-  if (lastTwo >= 11 && lastTwo <= 19) return 'заданий'
-  if (lastOne === 1) return 'задание'
-  if (lastOne >= 2 && lastOne <= 4) return 'задания'
-  return 'заданий'
 }

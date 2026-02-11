@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 
 export function InvitePage() {
+  const { t } = useTranslation()
   const { code } = useParams<{ code: string }>()
   const navigate = useNavigate()
   const { user, loading: authLoading } = useAuth()
@@ -35,7 +37,7 @@ export function InvitePage() {
       .single()
 
     if (error || !data) {
-      setError('Приглашение недействительно или истекло')
+      setError(t('invite.invalidInvite'))
       return
     }
 
@@ -45,7 +47,7 @@ export function InvitePage() {
       : boardData?.title
 
     setInviteInfo({
-      boardTitle: boardTitle || 'Доска',
+      boardTitle: boardTitle || t('invite.defaultBoardName'),
       role: data.role as string,
     })
   }
@@ -74,12 +76,11 @@ export function InvitePage() {
       }
 
       if (result.success && result.board_id) {
-        // Save the board ID so it opens automatically
         localStorage.setItem('selectedBoardId', result.board_id)
         navigate('/board')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка принятия приглашения')
+      setError(err instanceof Error ? err.message : t('invite.acceptError'))
     } finally {
       setLoading(false)
     }
@@ -94,18 +95,20 @@ export function InvitePage() {
   }
 
   const getRoleLabel = (role: string): string => {
-    return role === 'editor' ? 'редактора' : 'наблюдателя'
+    return role === 'editor' ? t('invite.roleEditor') : t('invite.roleViewer')
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Приглашение в StudyFlow</CardTitle>
+          <CardTitle className="text-2xl">{t('invite.title')}</CardTitle>
           {inviteInfo && (
             <CardDescription>
-              Вас пригласили в доску "{inviteInfo.boardTitle}" с правами{' '}
-              {getRoleLabel(inviteInfo.role)}
+              {t('invite.description', {
+                boardTitle: inviteInfo.boardTitle,
+                role: getRoleLabel(inviteInfo.role),
+              })}
             </CardDescription>
           )}
         </CardHeader>
@@ -124,7 +127,7 @@ export function InvitePage() {
                   onClick={handleAccept}
                   disabled={loading}
                 >
-                  {loading ? 'Принятие...' : 'Принять приглашение'}
+                  {loading ? t('invite.accepting') : t('invite.accept')}
                 </Button>
               ) : (
                 <div className="space-y-2">
@@ -132,14 +135,14 @@ export function InvitePage() {
                     className="w-full"
                     onClick={() => navigate(`/login?redirect=/invite/${code}`)}
                   >
-                    Войти и принять
+                    {t('invite.signInAndAccept')}
                   </Button>
                   <Button
                     className="w-full"
                     variant="outline"
                     onClick={() => navigate(`/register?redirect=/invite/${code}`)}
                   >
-                    Зарегистрироваться
+                    {t('invite.register')}
                   </Button>
                 </div>
               )}
@@ -151,7 +154,7 @@ export function InvitePage() {
             className="w-full"
             onClick={() => navigate('/')}
           >
-            Отмена
+            {t('common.cancel')}
           </Button>
         </CardContent>
       </Card>

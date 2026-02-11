@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
 
 export function ForgotPasswordPage() {
+  const { t } = useTranslation()
   const [email, setEmail] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -22,7 +24,7 @@ export function ForgotPasswordPage() {
       await resetPassword(email)
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка отправки')
+      setError(err instanceof Error ? err.message : t('auth.sendError'))
     } finally {
       setLoading(false)
     }
@@ -33,15 +35,15 @@ export function ForgotPasswordPage() {
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
-            <CardTitle className="text-2xl">Проверьте почту</CardTitle>
+            <CardTitle className="text-2xl">{t('auth.checkEmail')}</CardTitle>
             <CardDescription>
-              Мы отправили инструкции по восстановлению пароля на {email}
+              {t('auth.resetEmailSent', { email })}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link to="/login">
               <Button className="w-full" variant="outline">
-                Вернуться к входу
+                {t('auth.backToLogin')}
               </Button>
             </Link>
           </CardContent>
@@ -54,9 +56,9 @@ export function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Восстановление пароля</CardTitle>
+          <CardTitle className="text-2xl">{t('auth.forgotPasswordTitle')}</CardTitle>
           <CardDescription>
-            Введите email для получения инструкций
+            {t('auth.forgotPasswordDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -68,7 +70,7 @@ export function ForgotPasswordPage() {
             )}
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium">
-                Email
+                {t('auth.email')}
               </label>
               <Input
                 id="email"
@@ -81,12 +83,12 @@ export function ForgotPasswordPage() {
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Отправка...' : 'Отправить инструкции'}
+              {loading ? t('auth.sending') : t('auth.sendInstructions')}
             </Button>
           </form>
           <div className="mt-4 text-center text-sm">
             <Link to="/login" className="text-primary hover:underline">
-              Вернуться к входу
+              {t('auth.backToLogin')}
             </Link>
           </div>
         </CardContent>

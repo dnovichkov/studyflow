@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Dialog,
   DialogContent,
@@ -33,6 +34,7 @@ interface Invite {
 }
 
 export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
+  const { t } = useTranslation()
   const [invites, setInvites] = useState<Invite[]>([])
   const [role, setRole] = useState<'editor' | 'viewer'>('viewer')
   const [loading, setLoading] = useState(false)
@@ -106,43 +108,43 @@ export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
   }
 
   const getRoleLabel = (role: string): string => {
-    return role === 'editor' ? 'Редактор' : 'Наблюдатель'
+    return role === 'editor' ? t('share.roleEditor') : t('share.roleViewer')
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Поделиться доской</DialogTitle>
+          <DialogTitle>{t('share.title')}</DialogTitle>
           <DialogDescription>
-            Создайте ссылку-приглашение для совместной работы
+            {t('share.description')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <div className="flex gap-2">
             <div className="flex-1">
-              <Label htmlFor="role">Роль</Label>
+              <Label htmlFor="role">{t('share.roleLabel')}</Label>
               <Select value={role} onValueChange={(v) => setRole(v as 'editor' | 'viewer')}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="editor">Редактор</SelectItem>
-                  <SelectItem value="viewer">Наблюдатель</SelectItem>
+                  <SelectItem value="editor">{t('share.roleEditor')}</SelectItem>
+                  <SelectItem value="viewer">{t('share.roleViewer')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex items-end">
               <Button onClick={generateInvite} disabled={loading}>
-                {loading ? 'Создание...' : 'Создать ссылку'}
+                {loading ? t('share.creating') : t('share.createLink')}
               </Button>
             </div>
           </div>
 
           {invites.length > 0 && (
             <div className="space-y-2">
-              <Label>Активные приглашения</Label>
+              <Label>{t('share.activeInvites')}</Label>
               {invites.map((invite) => (
                 <div
                   key={invite.id}
@@ -153,7 +155,7 @@ export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
                       {getRoleLabel(invite.role)}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      Использовано: {invite.useCount}/{invite.maxUses || 'Unlimited'}
+                      {t('share.used')}: {invite.useCount}/{invite.maxUses || 'Unlimited'}
                     </div>
                   </div>
                   <Button
@@ -161,7 +163,7 @@ export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
                     size="sm"
                     onClick={() => copyLink(invite.code, invite.id)}
                   >
-                    {copiedId === invite.id ? 'Скопировано!' : 'Копировать'}
+                    {copiedId === invite.id ? t('share.copied') : t('share.copy')}
                   </Button>
                   <Button
                     variant="ghost"

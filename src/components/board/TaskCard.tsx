@@ -1,9 +1,11 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/card'
 import type { Task, Subject } from '@/types'
-import { PRIORITY_COLORS, PRIORITY_LABELS } from '@/types'
+import { PRIORITY_COLORS } from '@/types'
 import { cn } from '@/lib/utils'
+import type { TFunction } from 'i18next'
 
 interface TaskCardProps {
   task: Task
@@ -13,6 +15,7 @@ interface TaskCardProps {
 }
 
 export function TaskCard({ task, subject, onClick }: TaskCardProps) {
+  const { t, i18n } = useTranslation()
   const {
     attributes,
     listeners,
@@ -53,7 +56,7 @@ export function TaskCard({ task, subject, onClick }: TaskCardProps) {
               PRIORITY_COLORS[task.priority]
             )}
           >
-            {PRIORITY_LABELS[task.priority]}
+            {t(`task.priority.${task.priority}`)}
           </span>
         </div>
 
@@ -77,11 +80,11 @@ export function TaskCard({ task, subject, onClick }: TaskCardProps) {
               isOverdue && 'text-destructive font-medium',
               isCompletedLate && 'text-yellow-600 dark:text-yellow-400'
             )}>
-              {formatDeadline(task.deadline, task.completedAt)}
+              {formatDeadline(task.deadline, task.completedAt, t, i18n.language)}
             </span>
           )}
           {task.isRepeat && (
-            <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" title="Повторяемое задание">
+            <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" title={t('task.repeatBadge')}>
               ↻
             </span>
           )}
@@ -91,34 +94,35 @@ export function TaskCard({ task, subject, onClick }: TaskCardProps) {
   )
 }
 
-function formatDeadline(deadline: string, completedAt?: string | null): string {
+function formatDeadline(deadline: string, completedAt: string | null | undefined, t: TFunction, language: string): string {
   const date = new Date(deadline)
   const referenceDate = completedAt ? new Date(completedAt) : new Date()
 
-  // Compare calendar days to avoid rounding issues with time-of-day
   const deadlineDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const referenceDay = new Date(referenceDate.getFullYear(), referenceDate.getMonth(), referenceDate.getDate())
   const diffDays = Math.round((deadlineDay.getTime() - referenceDay.getTime()) / (1000 * 60 * 60 * 24))
 
+  const locale = language === 'ru' ? 'ru-RU' : 'en-US'
+
   if (completedAt) {
     if (diffDays < 0) {
-      return `Сдано с опозданием ${Math.abs(diffDays)} дн.`
+      return t('deadline.submittedLate', { count: Math.abs(diffDays) })
     }
-    return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+    return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
   }
 
   if (diffDays < 0) {
-    return `Просрочено ${Math.abs(diffDays)} дн.`
+    return t('deadline.overdue', { count: Math.abs(diffDays) })
   }
   if (diffDays === 0) {
-    return 'Сегодня'
+    return t('deadline.today')
   }
   if (diffDays === 1) {
-    return 'Завтра'
+    return t('deadline.tomorrow')
   }
   if (diffDays <= 7) {
-    return `Через ${diffDays} дн.`
+    return t('deadline.inDays', { count: diffDays })
   }
 
-  return date.toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short' })
 }

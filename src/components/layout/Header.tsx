@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { MenuIcon, MoonIcon, SunIcon, PrinterIcon, PaletteIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,11 +21,13 @@ import { ShareDialog } from '@/components/board/ShareDialog'
 import { PrintDialog } from '@/components/board/PrintDialog'
 import { SubjectsDialog } from '@/components/board/SubjectsDialog'
 import { BoardSwitcher } from '@/components/board/BoardSwitcher'
+import { LanguageSwitcher } from '@/components/layout/LanguageSwitcher'
 import { useAuth } from '@/hooks/useAuth'
 import { useBoardStore } from '@/stores/boardStore'
 import { useTheme } from '@/hooks/useTheme'
 
 export function Header() {
+  const { t } = useTranslation()
   const { user, signOut } = useAuth()
   const { board } = useBoardStore()
   const { isDark, toggleTheme } = useTheme()
@@ -63,23 +66,25 @@ export function Header() {
             <>
               <Button variant="outline" size="sm" onClick={() => setSubjectsOpen(true)}>
                 <PaletteIcon className="h-4 w-4 mr-2" />
-                Предметы
+                {t('nav.subjects')}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setPrintOpen(true)}>
                 <PrinterIcon className="h-4 w-4 mr-2" />
-                Печать
+                {t('nav.print')}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-                Поделиться
+                {t('nav.share')}
               </Button>
             </>
           )}
+
+          <LanguageSwitcher />
 
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            title={isDark ? 'Светлая тема' : 'Темная тема'}
+            title={isDark ? t('nav.lightTheme') : t('nav.darkTheme')}
           >
             {isDark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
           </Button>
@@ -92,11 +97,11 @@ export function Header() {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => navigate('/settings')}>
-                Настройки
+                {t('nav.settings')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleSignOut}>
-                Выйти
+                {t('nav.signOut')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -104,11 +109,13 @@ export function Header() {
 
         {/* Mobile navigation */}
         <div className="flex md:hidden items-center gap-2">
+          <LanguageSwitcher />
+
           <Button
             variant="ghost"
             size="icon"
             onClick={toggleTheme}
-            title={isDark ? 'Светлая тема' : 'Темная тема'}
+            title={isDark ? t('nav.lightTheme') : t('nav.darkTheme')}
           >
             {isDark ? <SunIcon className="h-5 w-5" /> : <MoonIcon className="h-5 w-5" />}
           </Button>
@@ -121,7 +128,7 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px]">
               <SheetHeader>
-                <SheetTitle>Меню</SheetTitle>
+                <SheetTitle>{t('nav.menu')}</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-4 mt-6">
                 <div className="text-sm text-muted-foreground px-2">
@@ -139,7 +146,7 @@ export function Header() {
                       }}
                     >
                       <PaletteIcon className="h-4 w-4 mr-2" />
-                      Предметы
+                      {t('nav.subjects')}
                     </Button>
                     <Button
                       variant="outline"
@@ -150,7 +157,7 @@ export function Header() {
                       }}
                     >
                       <PrinterIcon className="h-4 w-4 mr-2" />
-                      Печать заданий
+                      {t('nav.printTasks')}
                     </Button>
                     <Button
                       variant="outline"
@@ -160,7 +167,7 @@ export function Header() {
                         setShareOpen(true)
                       }}
                     >
-                      Поделиться доской
+                      {t('nav.shareBoard')}
                     </Button>
                   </>
                 )}
@@ -170,7 +177,7 @@ export function Header() {
                   className="justify-start"
                   onClick={() => handleMobileNav('/board')}
                 >
-                  Доска
+                  {t('nav.board')}
                 </Button>
 
                 <Button
@@ -178,7 +185,7 @@ export function Header() {
                   className="justify-start"
                   onClick={() => handleMobileNav('/settings')}
                 >
-                  Настройки
+                  {t('nav.settings')}
                 </Button>
 
                 <div className="border-t pt-4 mt-auto">
@@ -190,7 +197,7 @@ export function Header() {
                       handleSignOut()
                     }}
                   >
-                    Выйти
+                    {t('nav.signOut')}
                   </Button>
                 </div>
               </nav>
