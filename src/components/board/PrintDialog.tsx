@@ -106,7 +106,7 @@ function groupBySubject(tasks: Task[], subjects: Subject[], noSubjectLabel: stri
   })
 }
 
-function groupByColumn(tasks: Task[], columns: Column[]): GroupedTasks[] {
+function groupByColumn(tasks: Task[], columns: Column[], columnNames: string[]): GroupedTasks[] {
   const positions = [0, 1, 3]
   const result: GroupedTasks[] = []
 
@@ -118,7 +118,7 @@ function groupByColumn(tasks: Task[], columns: Column[]): GroupedTasks[] {
     if (columnTasks.length > 0) {
       result.push({
         key: column.id,
-        label: column.title,
+        label: columnNames[pos] ?? column.title,
         color: null,
         tasks: sortTasks(columnTasks),
       })
@@ -243,7 +243,7 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
       case 'subject':
         return groupBySubject(incompleteTasks, subjects, t('print.noSubject'))
       case 'column':
-        return groupByColumn(incompleteTasks, columns)
+        return groupByColumn(incompleteTasks, columns, t('defaults.columns', { returnObjects: true }) as string[])
       case 'deadline':
         return groupByDeadline(incompleteTasks, t)
       default:
@@ -251,8 +251,12 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
     }
   }, [incompleteTasks, subjects, columns, groupBy, t])
 
+  const columnNames = t('defaults.columns', { returnObjects: true }) as string[]
+
   const getColumnName = (columnId: string): string => {
-    return columns.find((c) => c.id === columnId)?.title || ''
+    const col = columns.find((c) => c.id === columnId)
+    if (!col) return ''
+    return columnNames[col.position] ?? col.title
   }
 
   const getSubjectName = (subjectId: string | null): string | null => {

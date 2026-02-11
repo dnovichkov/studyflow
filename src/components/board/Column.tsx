@@ -35,7 +35,7 @@ export function Column({ column, tasks, subjects, onAddTask, onTaskClick, canEdi
     >
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium text-sm">
-          {column.title}
+          {(t('defaults.columns', { returnObjects: true }) as string[])[column.position] ?? column.title}
           <span className="ml-2 text-muted-foreground">({tasks.length})</span>
         </h3>
       </div>
