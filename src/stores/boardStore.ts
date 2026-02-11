@@ -41,10 +41,14 @@ interface BoardState {
   moveTask: (taskId: string, newColumnId: string, newPosition: number) => Promise<void>
   reorderTasks: (columnId: string, taskIds: string[]) => Promise<void>
 
+  leaveBoard: (userId: string, boardId: string) => Promise<void>
+
   addSubject: (boardId: string, name: string, color?: string) => Promise<Subject>
   updateSubject: (id: string, updates: { name?: string; color?: string | null }) => Promise<void>
   deleteSubject: (id: string) => Promise<void>
 }
+
+let fetchBoardInProgress: Promise<void> | null = null
 
 export const useBoardStore = create<BoardState>((set, get) => ({
   board: null,
@@ -117,7 +121,13 @@ export const useBoardStore = create<BoardState>((set, get) => ({
   },
 
   fetchBoard: async (userId: string, boardId?: string) => {
+    // Prevent concurrent calls (React Strict Mode calls effects twice)
+    if (fetchBoardInProgress) {
+      return fetchBoardInProgress
+    }
+
     set({ loading: true, error: null })
+    const promise = (async () => {
     try {
       // First fetch available boards to know what we can access
       await get().fetchAvailableBoards(userId)
@@ -232,6 +242,14 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       })
     } catch (err) {
       set({ error: err instanceof Error ? err.message : 'Error fetching board', loading: false })
+    }
+    })()
+
+    fetchBoardInProgress = promise
+    try {
+      await promise
+    } finally {
+      fetchBoardInProgress = null
     }
   },
 
@@ -404,6 +422,30 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     for (const update of updates) {
       await supabase.from('tasks').update({ position: update.position }).eq('id', update.id)
+    }
+  },
+
+  leaveBoard: async (userId: string, boardId: string) => {
+    const { error } = await supabase
+      .from('board_members')
+      .delete()
+      .eq('board_id', boardId)
+      .eq('user_id', userId)
+
+    if (error) throw error
+
+    // Remove from available boards
+    const available = get().availableBoards.filter((b) => b.id !== boardId)
+    set({ availableBoards: available })
+
+    // If we left the current board, switch to first own board
+    if (get().board?.id === boardId) {
+      const ownBoard = available.find((b) => b.isOwner)
+      if (ownBoard) {
+        await get().switchBoard(userId, ownBoard.id)
+      } else {
+        await get().fetchBoard(userId)
+      }
     }
   },
 

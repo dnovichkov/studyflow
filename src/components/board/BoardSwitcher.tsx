@@ -1,4 +1,4 @@
-import { ChevronDownIcon } from 'lucide-react'
+import { ChevronDownIcon, LogOutIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -26,7 +26,7 @@ function getOwnerName(email?: string): string {
 
 export function BoardSwitcher() {
   const { user } = useAuth()
-  const { board, availableBoards, userRole, switchBoard } = useBoardStore()
+  const { board, availableBoards, userRole, switchBoard, leaveBoard } = useBoardStore()
 
   const currentBoard = availableBoards.find((b) => b.id === board?.id)
   const currentOwnerName = currentBoard && !currentBoard.isOwner ? getOwnerName(currentBoard.ownerEmail) : null
@@ -106,10 +106,22 @@ export function BoardSwitcher() {
                   className={`flex flex-col items-start gap-0.5 ${b.id === board.id ? 'bg-accent' : ''}`}
                 >
                   <div className="flex items-center gap-2 w-full">
-                    <span>{b.title}</span>
-                    <Badge variant="outline" className="text-xs ml-auto">
+                    <span className="truncate">{b.title}</span>
+                    <Badge variant="outline" className="text-xs ml-auto shrink-0">
                       {roleLabels[b.role]}
                     </Badge>
+                    <button
+                      className="shrink-0 p-0.5 rounded hover:bg-destructive/20 hover:text-destructive transition-colors"
+                      title="Покинуть доску"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (user && confirm(`Покинуть доску «${b.title}»?`)) {
+                          leaveBoard(user.id, b.id)
+                        }
+                      }}
+                    >
+                      <LogOutIcon className="h-3.5 w-3.5" />
+                    </button>
                   </div>
                   {ownerName && (
                     <span className="text-xs text-muted-foreground">от {ownerName}</span>
