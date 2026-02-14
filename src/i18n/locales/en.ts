@@ -157,6 +157,11 @@ export const en = {
     },
   },
 
+  export: {
+    wordButton: 'Export to Word',
+    notesSection: 'Notes',
+  },
+
   boardSwitcher: {
     myBoards: 'My boards',
     sharedBoards: 'Shared boards',

@@ -161,6 +161,11 @@ export const ru = {
     },
   },
 
+  export: {
+    wordButton: 'Экспорт в Word',
+    notesSection: 'Заметки',
+  },
+
   boardSwitcher: {
     myBoards: 'Мои доски',
     sharedBoards: 'Общие доски',
