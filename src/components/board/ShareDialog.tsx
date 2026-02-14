@@ -184,9 +184,10 @@ export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
 
 function generateCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'
+  const randomValues = crypto.getRandomValues(new Uint32Array(8))
   let code = ''
   for (let i = 0; i < 8; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length))
+    code += chars.charAt(randomValues[i] % chars.length)
   }
   return code
 }

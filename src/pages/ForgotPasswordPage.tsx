@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 export function ForgotPasswordPage() {
   const { t } = useTranslation()
@@ -24,7 +25,7 @@ export function ForgotPasswordPage() {
       await resetPassword(email)
       setSuccess(true)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.sendError'))
+      setError(getSafeErrorMessage(err, 'auth.sendError'))
     } finally {
       setLoading(false)
     }

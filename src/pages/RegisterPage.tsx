@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 export function RegisterPage() {
   const { t } = useTranslation()
@@ -25,7 +26,7 @@ export function RegisterPage() {
     try {
       await signInWithGoogle()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.signInGoogleError'))
+      setError(getSafeErrorMessage(err, 'auth.signInGoogleError'))
       setLoading(false)
     }
   }
@@ -39,7 +40,7 @@ export function RegisterPage() {
       return
     }
 
-    if (password.length < 6) {
+    if (password.length < 8) {
       setError(t('auth.passwordTooShort'))
       return
     }
@@ -54,7 +55,7 @@ export function RegisterPage() {
         setSuccess(true)
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.registerError'))
+      setError(getSafeErrorMessage(err, 'auth.registerError'))
     } finally {
       setLoading(false)
     }
@@ -124,7 +125,7 @@ export function RegisterPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 disabled={loading}
               />
             </div>
@@ -138,7 +139,7 @@ export function RegisterPage() {
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 required
-                minLength={6}
+                minLength={8}
                 disabled={loading}
               />
             </div>

@@ -29,6 +29,7 @@ import {
   getPriorityMarker,
 } from '@/lib/taskGrouping'
 import { exportToWord } from '@/lib/exportToWord'
+import { sanitizeHexColor } from '@/lib/sanitize'
 
 interface PrintDialogProps {
   open: boolean
@@ -107,8 +108,8 @@ export function PrintDialog({ open, onOpenChange }: PrintDialogProps) {
     let tasksHtml = ''
 
     groupedTasks.forEach((group) => {
-      const borderColor = group.color || '#333'
-      const labelColor = group.color || '#000'
+      const borderColor = sanitizeHexColor(group.color, '#333')
+      const labelColor = sanitizeHexColor(group.color, '#000')
 
       tasksHtml += `
         <div class="section">

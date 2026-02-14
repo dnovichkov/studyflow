@@ -13,6 +13,17 @@ export const en = {
     retry: 'Try again',
   },
 
+  errors: {
+    invalidCredentials: 'Invalid email or password',
+    emailNotConfirmed: 'Please confirm your email first',
+    userAlreadyRegistered: 'A user with this email already exists',
+    rateLimited: 'Too many attempts. Please try again later',
+    generic: 'An error occurred. Please try again',
+    titleTooLong: 'Title must be 200 characters or less',
+    descriptionTooLong: 'Description must be 5000 characters or less',
+    nameTooLong: 'Name must be 100 characters or less',
+  },
+
   auth: {
     signIn: 'Sign in',
     signingIn: 'Signing in...',
@@ -32,7 +43,7 @@ export const en = {
     registerDescription: 'Create a StudyFlow account',
     registerError: 'Registration error',
     passwordMismatch: 'Passwords do not match',
-    passwordTooShort: 'Password must be at least 6 characters',
+    passwordTooShort: 'Password must be at least 8 characters',
     userExists: 'A user with this email already exists',
     checkEmail: 'Check your email',
     confirmationSent: 'We sent a confirmation link to {{email}}',

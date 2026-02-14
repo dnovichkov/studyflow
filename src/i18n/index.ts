@@ -32,6 +32,8 @@ i18n.use(initReactI18next).init({
   lng: initialLanguage,
   fallbackLng: 'ru',
   interpolation: {
+    // React handles XSS escaping in JSX. Enabling escapeValue would cause
+    // double-escaping (e.g., & -> &amp;amp;). PrintDialog uses its own escapeHtml().
     escapeValue: false,
   },
 })

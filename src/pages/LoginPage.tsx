@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useAuth } from '@/hooks/useAuth'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 export function LoginPage() {
   const { t } = useTranslation()
@@ -17,7 +18,10 @@ export function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const from = location.state?.from?.pathname || '/board'
+  const rawFrom = location.state?.from?.pathname
+  const from = typeof rawFrom === 'string' && rawFrom.startsWith('/') && !rawFrom.startsWith('//')
+    ? rawFrom
+    : '/board'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -28,7 +32,7 @@ export function LoginPage() {
       await signIn(email, password)
       navigate(from, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.signInError'))
+      setError(getSafeErrorMessage(err, 'auth.signInError'))
     } finally {
       setLoading(false)
     }
@@ -41,7 +45,7 @@ export function LoginPage() {
     try {
       await signInWithGoogle()
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('auth.signInGoogleError'))
+      setError(getSafeErrorMessage(err, 'auth.signInGoogleError'))
       setLoading(false)
     }
   }

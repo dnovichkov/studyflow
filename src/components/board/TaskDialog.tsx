@@ -22,6 +22,7 @@ import {
 import { useBoardStore } from '@/stores/boardStore'
 import type { Task, Priority } from '@/types'
 import { Plus, X } from 'lucide-react'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 const PRIORITIES: Priority[] = ['low', 'medium', 'high']
 
@@ -82,7 +83,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
       setShowNewSubject(false)
       setNewSubjectName('')
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('task.subjectCreateError'))
+      setError(getSafeErrorMessage(err, 'task.subjectCreateError'))
     }
   }
 
@@ -90,6 +91,14 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
     e.preventDefault()
     if (!title.trim()) {
       setError(t('task.titleRequired'))
+      return
+    }
+    if (title.trim().length > 200) {
+      setError(t('errors.titleTooLong'))
+      return
+    }
+    if (description.trim().length > 5000) {
+      setError(t('errors.descriptionTooLong'))
       return
     }
 
@@ -128,7 +137,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
       }
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('task.saveError'))
+      setError(getSafeErrorMessage(err, 'task.saveError'))
     } finally {
       setLoading(false)
     }
@@ -142,7 +151,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
       await deleteTask(task.id)
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('task.deleteError'))
+      setError(getSafeErrorMessage(err, 'task.deleteError'))
     } finally {
       setLoading(false)
     }
@@ -171,6 +180,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder={t('task.titlePlaceholder')}
+              maxLength={200}
               disabled={loading || readOnly}
             />
           </div>
@@ -182,6 +192,7 @@ export function TaskDialog({ open, onOpenChange, task, columnId, canEdit = true 
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t('task.descriptionPlaceholder')}
+              maxLength={5000}
               rows={3}
               disabled={loading || readOnly}
             />

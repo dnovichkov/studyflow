@@ -1,7 +1,9 @@
 import { create } from 'zustand'
 import { supabase } from '@/lib/supabase'
 import i18n from '@/i18n'
-import type { Board, Column, Task, Subject, Priority } from '@/types'
+import type { Board, Column, Task, Subject } from '@/types'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
+import { mapBoard, mapColumn, mapTask, mapSubject } from '@/lib/mappers'
 
 export const SUBJECT_COLORS = [
   '#3b82f6', '#ef4444', '#a855f7', '#22c55e', '#f59e0b',
@@ -242,7 +244,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         loading: false,
       })
     } catch (err) {
-      set({ error: err instanceof Error ? err.message : 'Error fetching board', loading: false })
+      set({ error: getSafeErrorMessage(err, 'errors.generic'), loading: false })
     }
     })()
 
@@ -477,51 +479,3 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }))
   },
 }))
-
-function mapBoard(data: Record<string, unknown>): Board {
-  return {
-    id: data.id as string,
-    userId: data.user_id as string,
-    title: data.title as string,
-    createdAt: data.created_at as string,
-    updatedAt: data.updated_at as string,
-  }
-}
-
-function mapColumn(data: Record<string, unknown>): Column {
-  return {
-    id: data.id as string,
-    boardId: data.board_id as string,
-    title: data.title as string,
-    position: data.position as number,
-    createdAt: data.created_at as string,
-  }
-}
-
-function mapTask(data: Record<string, unknown>): Task {
-  return {
-    id: data.id as string,
-    columnId: data.column_id as string,
-    subjectId: data.subject_id as string | null,
-    title: data.title as string,
-    description: data.description as string | null,
-    deadline: data.deadline as string | null,
-    priority: data.priority as Priority,
-    position: data.position as number,
-    isRepeat: (data.is_repeat as boolean) ?? false,
-    completedAt: data.completed_at as string | null,
-    createdAt: data.created_at as string,
-    updatedAt: data.updated_at as string,
-  }
-}
-
-function mapSubject(data: Record<string, unknown>): Subject {
-  return {
-    id: data.id as string,
-    boardId: data.board_id as string,
-    userId: data.user_id as string | null,
-    name: data.name as string,
-    color: data.color as string | null,
-    createdAt: data.created_at as string,
-  }
-}

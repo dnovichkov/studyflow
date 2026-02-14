@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react'
 import { useBoardStore, SUBJECT_COLORS } from '@/stores/boardStore'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 interface SubjectsDialogProps {
   open: boolean
@@ -49,13 +50,17 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
 
   const handleSaveEdit = async () => {
     if (!editingId || !editName.trim()) return
+    if (editName.trim().length > 100) {
+      setError(t('errors.nameTooLong'))
+      return
+    }
     setLoading(true)
     setError(null)
     try {
       await updateSubject(editingId, { name: editName.trim(), color: editColor })
       setEditingId(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('subjects.saveError'))
+      setError(getSafeErrorMessage(err, 'subjects.saveError'))
     } finally {
       setLoading(false)
     }
@@ -75,7 +80,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
       await deleteSubject(id)
       if (editingId === id) setEditingId(null)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('subjects.deleteError'))
+      setError(getSafeErrorMessage(err, 'subjects.deleteError'))
     } finally {
       setLoading(false)
     }
@@ -83,6 +88,10 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
 
   const handleAdd = async () => {
     if (!newName.trim() || !board?.id) return
+    if (newName.trim().length > 100) {
+      setError(t('errors.nameTooLong'))
+      return
+    }
     setLoading(true)
     setError(null)
     try {
@@ -91,7 +100,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
       setNewColor(SUBJECT_COLORS[(subjects.length + 1) % SUBJECT_COLORS.length])
       setAdding(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('subjects.createError'))
+      setError(getSafeErrorMessage(err, 'subjects.createError'))
     } finally {
       setLoading(false)
     }
@@ -126,6 +135,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       placeholder={t('subjects.subjectNamePlaceholder')}
+                      maxLength={100}
                       disabled={loading}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') handleSaveEdit()
@@ -204,6 +214,7 @@ export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
                     value={newName}
                     onChange={(e) => setNewName(e.target.value)}
                     placeholder={t('subjects.subjectNamePlaceholder')}
+                    maxLength={100}
                     disabled={loading}
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') handleAdd()

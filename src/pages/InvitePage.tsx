@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 export function InvitePage() {
   const { t } = useTranslation()
@@ -71,7 +72,7 @@ export function InvitePage() {
       const result = data as { error?: string; success?: boolean; board_id?: string }
 
       if (result.error) {
-        setError(result.error)
+        setError(t('invite.acceptError'))
         return
       }
 
@@ -80,7 +81,7 @@ export function InvitePage() {
         navigate('/board')
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('invite.acceptError'))
+      setError(getSafeErrorMessage(err, 'invite.acceptError'))
     } finally {
       setLoading(false)
     }

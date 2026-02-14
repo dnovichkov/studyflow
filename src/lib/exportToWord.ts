@@ -10,6 +10,7 @@ import { saveAs } from 'file-saver'
 import type { GroupedTasks, GroupBy } from '@/lib/taskGrouping'
 import { formatPrintDeadline, getPriorityMarker } from '@/lib/taskGrouping'
 import type { TFunction } from 'i18next'
+import { sanitizeHexColorBare } from '@/lib/sanitize'
 
 interface ExportOptions {
   groupedTasks: GroupedTasks[]
@@ -70,8 +71,8 @@ export async function exportToWord({
 
   // Grouped sections
   for (const group of groupedTasks) {
-    const borderColor = group.color?.replace('#', '') || '333333'
-    const labelColor = group.color?.replace('#', '') || '000000'
+    const borderColor = sanitizeHexColorBare(group.color, '333333')
+    const labelColor = sanitizeHexColorBare(group.color, '000000')
 
     // Section header
     children.push(

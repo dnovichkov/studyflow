@@ -1,34 +1,7 @@
 import { useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useBoardStore } from '@/stores/boardStore'
-import type { Task, Column } from '@/types'
-
-function mapTask(data: Record<string, unknown>): Task {
-  return {
-    id: data.id as string,
-    columnId: data.column_id as string,
-    subjectId: data.subject_id as string | null,
-    title: data.title as string,
-    description: data.description as string | null,
-    deadline: data.deadline as string | null,
-    priority: data.priority as 'low' | 'medium' | 'high',
-    position: data.position as number,
-    isRepeat: (data.is_repeat as boolean) ?? false,
-    completedAt: data.completed_at as string | null,
-    createdAt: data.created_at as string,
-    updatedAt: data.updated_at as string,
-  }
-}
-
-function mapColumn(data: Record<string, unknown>): Column {
-  return {
-    id: data.id as string,
-    boardId: data.board_id as string,
-    title: data.title as string,
-    position: data.position as number,
-    createdAt: data.created_at as string,
-  }
-}
+import { mapTask, mapColumn } from '@/lib/mappers'
 
 function handleTaskChange(payload: {
   eventType: string
@@ -116,7 +89,7 @@ export function useRealtime(boardId: string | undefined) {
     if (columnIds.length === 0) return
 
     const tasksChannel = supabase
-      .channel('tasks-changes')
+      .channel(`tasks-changes-${boardId}`)
       .on(
         'postgres_changes',
         {
@@ -132,7 +105,7 @@ export function useRealtime(boardId: string | undefined) {
       .subscribe()
 
     const columnsChannel = supabase
-      .channel('columns-changes')
+      .channel(`columns-changes-${boardId}`)
       .on(
         'postgres_changes',
         {

@@ -13,6 +13,17 @@ export const ru = {
     retry: 'Попробовать снова',
   },
 
+  errors: {
+    invalidCredentials: 'Неверный email или пароль',
+    emailNotConfirmed: 'Пожалуйста, сначала подтвердите email',
+    userAlreadyRegistered: 'Пользователь с таким email уже существует',
+    rateLimited: 'Слишком много попыток. Попробуйте позже',
+    generic: 'Произошла ошибка. Попробуйте снова',
+    titleTooLong: 'Заголовок должен быть не более 200 символов',
+    descriptionTooLong: 'Описание должно быть не более 5000 символов',
+    nameTooLong: 'Название должно быть не более 100 символов',
+  },
+
   auth: {
     signIn: 'Войти',
     signingIn: 'Вход...',
@@ -32,7 +43,7 @@ export const ru = {
     registerDescription: 'Создайте аккаунт в StudyFlow',
     registerError: 'Ошибка регистрации',
     passwordMismatch: 'Пароли не совпадают',
-    passwordTooShort: 'Пароль должен содержать минимум 6 символов',
+    passwordTooShort: 'Пароль должен содержать минимум 8 символов',
     userExists: 'Пользователь с таким email уже существует',
     checkEmail: 'Проверьте почту',
     confirmationSent: 'Мы отправили ссылку для подтверждения на {{email}}',
