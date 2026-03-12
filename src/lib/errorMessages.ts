@@ -1,4 +1,5 @@
 import i18n from '@/i18n'
+import { devError } from '@/lib/logger'
 
 export function getSafeErrorMessage(err: unknown, fallbackKey: string): string {
   if (!err) return i18n.t(fallbackKey)
@@ -20,6 +21,6 @@ export function getSafeErrorMessage(err: unknown, fallbackKey: string): string {
     }
   }
 
-  console.error('Operation failed:', err)
+  devError('Operation failed:', err)
   return i18n.t(fallbackKey)
 }

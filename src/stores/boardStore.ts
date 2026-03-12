@@ -4,6 +4,7 @@ import i18n from '@/i18n'
 import type { Board, Column, Task, Subject } from '@/types'
 import { getSafeErrorMessage } from '@/lib/errorMessages'
 import { mapBoard, mapColumn, mapTask, mapSubject } from '@/lib/mappers'
+import { devError } from '@/lib/logger'
 
 export const SUBJECT_COLORS = [
   '#3b82f6', '#ef4444', '#a855f7', '#22c55e', '#f59e0b',
@@ -114,7 +115,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
       set({ availableBoards: available })
     } catch (err) {
-      console.error('Error fetching available boards:', err)
+      devError('Error fetching available boards:', err)
     }
   },
 

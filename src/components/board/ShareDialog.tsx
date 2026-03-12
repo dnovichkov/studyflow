@@ -17,6 +17,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
+import { devError } from '@/lib/logger'
 
 interface ShareDialogProps {
   open: boolean
@@ -89,7 +90,7 @@ export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
       if (error) throw error
       await fetchInvites()
     } catch (err) {
-      console.error('Error creating invite:', err)
+      devError('Error creating invite:', err)
     } finally {
       setLoading(false)
     }
