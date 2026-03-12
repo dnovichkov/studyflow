@@ -6,6 +6,10 @@ declare global {
     __ENV__?: {
       VITE_SUPABASE_URL?: string
       VITE_SUPABASE_ANON_KEY?: string
+      VITE_UMAMI_WEBSITE_ID?: string
+    }
+    umami?: {
+      track: (event: string, data?: Record<string, string | number | boolean>) => void
     }
   }
 }
@@ -24,4 +28,5 @@ function getEnv(key: string): string {
 export const env = {
   SUPABASE_URL: getEnv('VITE_SUPABASE_URL'),
   SUPABASE_ANON_KEY: getEnv('VITE_SUPABASE_ANON_KEY'),
+  UMAMI_WEBSITE_ID: getEnv('VITE_UMAMI_WEBSITE_ID'),
 }

@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useNotifications } from '@/hooks/useNotifications'
+import { trackEvent } from '@/lib/analytics'
 
 const TIME_OPTIONS = ['1', '3', '6', '12', '24', '48', '72'] as const
 
@@ -51,6 +52,7 @@ export function SettingsPage() {
   const handleSave = async () => {
     setSaving(true)
     await updateSettings(localSettings)
+    trackEvent('settings_changed')
     setSaving(false)
   }
 

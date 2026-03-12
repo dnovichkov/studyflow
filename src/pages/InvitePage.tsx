@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { getSafeErrorMessage } from '@/lib/errorMessages'
+import { trackEvent } from '@/lib/analytics'
 
 export function InvitePage() {
   const { t } = useTranslation()
@@ -77,6 +78,7 @@ export function InvitePage() {
       }
 
       if (result.success && result.board_id) {
+        trackEvent('invite_accepted')
         localStorage.setItem('selectedBoardId', result.board_id)
         navigate('/board')
       }

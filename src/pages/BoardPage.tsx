@@ -9,6 +9,7 @@ import { useBoardStore } from '@/stores/boardStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useRealtime } from '@/hooks/useRealtime'
 import type { Task } from '@/types'
+import { trackEvent } from '@/lib/analytics'
 
 export function BoardPage() {
   const { t } = useTranslation()
@@ -82,7 +83,9 @@ export function BoardPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="py-4">
-        <Tabs defaultValue="board" className="w-full">
+        <Tabs defaultValue="board" className="w-full" onValueChange={(v) => {
+          if (v === 'calendar') trackEvent('view_calendar')
+        }}>
           <div className="px-4 mb-4">
             <TabsList>
               <TabsTrigger value="board">{t('board.board')}</TabsTrigger>

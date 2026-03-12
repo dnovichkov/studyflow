@@ -5,6 +5,7 @@ import type { Board, Column, Task, Subject } from '@/types'
 import { getSafeErrorMessage } from '@/lib/errorMessages'
 import { mapBoard, mapColumn, mapTask, mapSubject } from '@/lib/mappers'
 import { devError } from '@/lib/logger'
+import { trackEvent } from '@/lib/analytics'
 
 export const SUBJECT_COLORS = [
   '#3b82f6', '#ef4444', '#a855f7', '#22c55e', '#f59e0b',
@@ -315,6 +316,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     const newTask = mapTask(data)
     set((state) => ({ tasks: [...state.tasks, newTask] }))
+    trackEvent('task_created', {
+      priority: task.priority || 'none',
+      hasDeadline: !!task.deadline,
+    })
     return newTask
   },
 
@@ -346,6 +351,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     set((state) => ({
       tasks: state.tasks.filter((t) => t.id !== id),
     }))
+    trackEvent('task_deleted')
   },
 
   moveTask: async (taskId: string, newColumnId: string, newPosition: number) => {
@@ -398,6 +404,10 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     if (error) {
       get().fetchBoard(get().board?.userId || '')
       throw error
+    }
+
+    if (isDoneColumn && !wasDone) {
+      trackEvent('task_completed')
     }
   },
 
@@ -458,6 +468,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
 
     const newSubject = mapSubject(data)
     set((state) => ({ subjects: [...state.subjects, newSubject] }))
+    trackEvent('subject_created')
     return newSubject
   },
 

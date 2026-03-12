@@ -18,6 +18,7 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase'
 import { devError } from '@/lib/logger'
+import { trackEvent } from '@/lib/analytics'
 
 interface ShareDialogProps {
   open: boolean
@@ -89,6 +90,7 @@ export function ShareDialog({ open, onOpenChange, boardId }: ShareDialogProps) {
 
       if (error) throw error
       await fetchInvites()
+      trackEvent('board_shared', { role })
     } catch (err) {
       devError('Error creating invite:', err)
     } finally {

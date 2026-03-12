@@ -11,6 +11,7 @@ import type { GroupedTasks, GroupBy } from '@/lib/taskGrouping'
 import { formatPrintDeadline, getPriorityMarker } from '@/lib/taskGrouping'
 import type { TFunction } from 'i18next'
 import { sanitizeHexColorBare } from '@/lib/sanitize'
+import { trackEvent } from '@/lib/analytics'
 
 interface ExportOptions {
   groupedTasks: GroupedTasks[]
@@ -237,4 +238,5 @@ export async function exportToWord({
   const blob = await Packer.toBlob(doc)
   const filename = `${t('print.myTasks')} \u2014 ${currentDate}.docx`
   saveAs(blob, filename)
+  trackEvent('export_word')
 }
