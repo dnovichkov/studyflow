@@ -1,24 +1,37 @@
+# Прод: образ собирает CI (.github/workflows/docker.yml), HTTPS и маршрут
+# dz-tracker.ru → studyflow:80 держит Caddy из репозитория sites_configs.
+# Разворачивает sites_configs/deploy.sh: IMAGE_TAG — полный sha коммита, по умолчанию latest.
+# Портов наружу нет — Caddy ходит в контейнер через общую docker-сеть web.
+
+# Имя закреплено: от него зависят имена томов и контейнеров на сервере.
+name: studyflow
+
 services:
   studyflow:
-    image: ghcr.io/dnovichkov/studyflow:latest
+    image: ghcr.io/dnovichkov/studyflow:${IMAGE_TAG:-latest}
     container_name: studyflow
     restart: unless-stopped
-    ports:
-      - "127.0.0.1:${APP_PORT:-3000}:80"
+    # Значения попадают в config.js при старте контейнера (docker-entrypoint.sh),
+    # поэтому образ один на все окружения. Задаются в .env рядом с этим файлом.
     environment:
-      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
-      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL:-}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY:-}
       - VITE_UMAMI_WEBSITE_ID=${VITE_UMAMI_WEBSITE_ID:-}
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      # 127.0.0.1, а не localhost: nginx слушает только IPv4.
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1/health"]
       interval: 30s
       timeout: 3s
       retries: 3
+      start_period: 5s
     networks:
       - web
 
-  # Umami web analytics (privacy-friendly, cookieless)
+  # Umami — веб-аналитика без cookies. Выключена, пока не включён профиль analytics:
+  # добавьте в .env строки COMPOSE_PROFILES=analytics, UMAMI_DB_PASSWORD и UMAMI_APP_SECRET,
+  # и следующий деплой поднимет оба сервиса.
   umami:
+    profiles: [analytics]
     image: ghcr.io/umami-software/umami:postgresql-latest
     container_name: umami
     restart: unless-stopped
@@ -26,15 +39,14 @@ services:
       umami-db:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD}@umami-db:5432/umami
-      APP_SECRET: ${UMAMI_APP_SECRET}
-    ports:
-      - "127.0.0.1:${UMAMI_PORT:-3001}:3000"
+      DATABASE_URL: postgresql://umami:${UMAMI_DB_PASSWORD:-}@umami-db:5432/umami
+      APP_SECRET: ${UMAMI_APP_SECRET:-}
     networks:
       - web
       - internal
 
   umami-db:
+    profiles: [analytics]
     image: postgres:15-alpine
     container_name: umami-db
     restart: unless-stopped
@@ -43,7 +55,7 @@ services:
     environment:
       POSTGRES_DB: umami
       POSTGRES_USER: umami
-      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD}
+      POSTGRES_PASSWORD: ${UMAMI_DB_PASSWORD:-}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U umami"]
       interval: 10s

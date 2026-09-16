@@ -39,9 +39,10 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          # Полный sha: по нему sites_configs/deploy.sh выкатывает ровно этот коммит.
           tags: |
             type=ref,event=branch
-            type=sha,prefix=
+            type=sha,prefix=,format=long
             type=raw,value=latest,enable={{is_default_branch}}
 
       - name: Build and push Docker image
@@ -54,3 +55,11 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           # Note: No build-args needed! Secrets are passed at runtime via environment variables
+
+  # Выкатка на сервер: общий workflow из sites_configs (SSH-ключ с forced command).
+  # Пока в репозитории нет секрета DEPLOY_SSH_KEY, шаг пропускается с предупреждением.
+  deploy:
+    needs: build
+    if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+    uses: dnovichkov/sites_configs/.github/workflows/deploy.yml@main
+    secrets: inherit
