@@ -27,6 +27,10 @@ export interface Board {
   id: string
   userId: string
   title: string
+  /** Учебный год в виде «2026/2027». Null у досок, созданных до появления архива */
+  schoolYear: string | null
+  /** Null = доска активна. Заполнено = архив, запись запрещена на уровне RLS */
+  archivedAt: string | null
   createdAt: string
   updatedAt: string
 }

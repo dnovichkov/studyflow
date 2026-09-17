@@ -25,6 +25,8 @@ export function mapBoard(data: Record<string, unknown>): Board {
     id: assertString(data.id, 'board.id'),
     userId: assertString(data.user_id, 'board.user_id'),
     title: assertString(data.title, 'board.title'),
+    schoolYear: optionalString(data.school_year),
+    archivedAt: optionalString(data.archived_at),
     createdAt: assertString(data.created_at, 'board.created_at'),
     updatedAt: assertString(data.updated_at, 'board.updated_at'),
   }

@@ -12,6 +12,9 @@ type EventName =
   | 'view_calendar'
   | 'subject_created'
   | 'settings_changed'
+  | 'board_archived'
+  | 'board_unarchived'
+  | 'school_year_started'
 
 /** Dynamically injects the Umami tracking script if UMAMI_WEBSITE_ID is configured */
 export function initAnalytics(): void {

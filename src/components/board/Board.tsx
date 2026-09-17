@@ -14,7 +14,7 @@ import {
 import { arrayMove } from '@dnd-kit/sortable'
 import { Column } from './Column'
 import { TaskCard } from './TaskCard'
-import { useBoardStore } from '@/stores/boardStore'
+import { useBoardStore, useCanEdit } from '@/stores/boardStore'
 import type { Task } from '@/types'
 
 interface BoardProps {
@@ -23,9 +23,9 @@ interface BoardProps {
 }
 
 export function Board({ onAddTask, onEditTask }: BoardProps) {
-  const { columns, tasks, subjects, userRole, moveTask, reorderTasks } = useBoardStore()
+  const { columns, tasks, subjects, moveTask, reorderTasks } = useBoardStore()
   const [activeTask, setActiveTask] = useState<Task | null>(null)
-  const canEdit = userRole === 'owner' || userRole === 'editor'
+  const canEdit = useCanEdit()
 
   const pointerSensor = useSensor(PointerSensor, {
     activationConstraint: {

@@ -190,6 +190,43 @@ export const ru = {
     },
   },
 
+  archive: {
+    section: 'Архив',
+    badge: 'Архив',
+    archiveBoard: 'В архив',
+    archiveConfirm:
+      'Отправить доску «{{title}}» в архив? Задания сохранятся, но редактировать их будет нельзя.',
+    unarchive: 'Вернуть из архива',
+    bannerTitle: 'Доска в архиве',
+    bannerDescription: 'Учебный год {{year}} завершён. Задания доступны только для просмотра.',
+    bannerDescriptionNoYear: 'Задания доступны только для просмотра.',
+    startNewYear: 'Начать новый учебный год',
+    error: 'Не удалось изменить статус доски',
+  },
+
+  newYear: {
+    menuItem: 'Новый учебный год…',
+    title: 'Новый учебный год',
+    description: 'Создадим новую доску и перенесём в неё то, что нужно.',
+    titleLabel: 'Название доски',
+    titlePlaceholder: '2026/2027',
+    titleRequired: 'Введите название доски',
+    subjectsLabel: 'Какие предметы переносим',
+    subjectsSelected: 'Выбрано {{count}} из {{total}}',
+    selectAll: 'Выбрать все',
+    clearAll: 'Снять все',
+    noSubjects: 'На текущей доске нет предметов',
+    carryOverTasks: 'Перенести незавершённые задания',
+    carryOverTasksHint: 'Всё, кроме колонки «Готово». Дедлайны прошлого года сбросятся.',
+    copyMembers: 'Сохранить доступ для участников',
+    copyMembersHint: 'Им не придётся заново принимать приглашение ({{count}})',
+    archiveSource: 'Отправить «{{title}}» в архив',
+    archiveSourceHint: 'Доска останется доступна для просмотра и печати',
+    submit: 'Создать доску',
+    submitting: 'Создание...',
+    error: 'Не удалось создать доску',
+  },
+
   settings: {
     title: 'Настройки',
     notifications: 'Уведомления',

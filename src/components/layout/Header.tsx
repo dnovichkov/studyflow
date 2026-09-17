@@ -37,6 +37,10 @@ export function Header() {
   const [subjectsOpen, setSubjectsOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Приглашения в архивную доску запрещены на уровне RLS — не показываем кнопку,
+  // которая гарантированно вернёт ошибку. Печать и экспорт остаются доступны.
+  const canShare = board && !board.archivedAt
+
   const handleSignOut = async () => {
     await signOut()
     navigate('/login')
@@ -72,9 +76,11 @@ export function Header() {
                 <PrinterIcon className="h-4 w-4 mr-2" />
                 {t('nav.print')}
               </Button>
-              <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
-                {t('nav.share')}
-              </Button>
+              {canShare && (
+                <Button variant="outline" size="sm" onClick={() => setShareOpen(true)}>
+                  {t('nav.share')}
+                </Button>
+              )}
             </>
           )}
 
@@ -159,16 +165,18 @@ export function Header() {
                       <PrinterIcon className="h-4 w-4 mr-2" />
                       {t('nav.printTasks')}
                     </Button>
-                    <Button
-                      variant="outline"
-                      className="justify-start"
-                      onClick={() => {
-                        setMobileMenuOpen(false)
-                        setShareOpen(true)
-                      }}
-                    >
-                      {t('nav.shareBoard')}
-                    </Button>
+                    {canShare && (
+                      <Button
+                        variant="outline"
+                        className="justify-start"
+                        onClick={() => {
+                          setMobileMenuOpen(false)
+                          setShareOpen(true)
+                        }}
+                      >
+                        {t('nav.shareBoard')}
+                      </Button>
+                    )}
                   </>
                 )}
 

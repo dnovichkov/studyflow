@@ -4,8 +4,9 @@ import { Header } from '@/components/layout/Header'
 import { Board } from '@/components/board/Board'
 import { WeekView } from '@/components/calendar/WeekView'
 import { TaskDialog } from '@/components/board/TaskDialog'
+import { ArchiveBanner } from '@/components/board/ArchiveBanner'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useBoardStore } from '@/stores/boardStore'
+import { useBoardStore, useCanEdit } from '@/stores/boardStore'
 import { useAuth } from '@/hooks/useAuth'
 import { useRealtime } from '@/hooks/useRealtime'
 import type { Task } from '@/types'
@@ -14,10 +15,11 @@ import { trackEvent } from '@/lib/analytics'
 export function BoardPage() {
   const { t } = useTranslation()
   const { user } = useAuth()
-  const { board, columns, userRole, loading, error, fetchBoard } = useBoardStore()
-  const canEdit = userRole === 'owner' || userRole === 'editor'
+  const { board, columns, loading, error, fetchBoard } = useBoardStore()
+  const canEdit = useCanEdit()
 
-  useRealtime(board?.id)
+  // В архивную доску никто не пишет — подписка была бы вечно молчащей
+  useRealtime(board?.archivedAt ? undefined : board?.id)
 
   const [taskDialogOpen, setTaskDialogOpen] = useState(false)
   const [selectedTask, setSelectedTask] = useState<Task | null>(null)
@@ -83,6 +85,8 @@ export function BoardPage() {
     <div className="min-h-screen bg-background">
       <Header />
       <main className="py-4">
+        <ArchiveBanner />
+
         <Tabs defaultValue="board" className="w-full" onValueChange={(v) => {
           if (v === 'calendar') trackEvent('view_calendar')
         }}>

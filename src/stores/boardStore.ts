@@ -21,6 +21,18 @@ interface AvailableBoard {
   role: UserRole
   isOwner: boolean
   ownerEmail?: string
+  schoolYear: string | null
+  archivedAt: string | null
+}
+
+export interface NewSchoolYearOptions {
+  title: string
+  schoolYear?: string | null
+  /** null = перенести все предметы */
+  subjectIds: string[] | null
+  carryOverTasks: boolean
+  copyMembers: boolean
+  archiveSource: boolean
 }
 
 interface BoardState {
@@ -48,6 +60,10 @@ interface BoardState {
 
   leaveBoard: (userId: string, boardId: string) => Promise<void>
 
+  archiveBoard: (userId: string, boardId: string) => Promise<void>
+  unarchiveBoard: (boardId: string) => Promise<void>
+  startNewSchoolYear: (userId: string, options: NewSchoolYearOptions) => Promise<void>
+
   addSubject: (boardId: string, name: string, color?: string) => Promise<Subject>
   updateSubject: (id: string, updates: { name?: string; color?: string | null }) => Promise<void>
   deleteSubject: (id: string) => Promise<void>
@@ -70,7 +86,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
       // Get own boards
       const { data: ownBoards, error: ownError } = await supabase
         .from('boards')
-        .select('id, title')
+        .select('id, title, school_year, archived_at')
         .eq('user_id', userId)
 
       if (ownError) throw ownError
@@ -80,7 +96,7 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         .from('board_members')
         .select(`
           role,
-          board:boards(id, title, owner_email)
+          board:boards(id, title, owner_email, school_year, archived_at)
         `)
         .eq('user_id', userId)
 
@@ -95,6 +111,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
           title: board.title,
           role: 'owner',
           isOwner: true,
+          schoolYear: board.school_year ?? null,
+          archivedAt: board.archived_at ?? null,
         })
       }
 
@@ -110,6 +128,8 @@ export const useBoardStore = create<BoardState>((set, get) => ({
             role: membership.role as UserRole,
             isOwner: false,
             ownerEmail: boardData.owner_email as string | undefined,
+            schoolYear: (boardData.school_year as string | null) ?? null,
+            archivedAt: (boardData.archived_at as string | null) ?? null,
           })
         }
       }
@@ -169,10 +189,16 @@ export const useBoardStore = create<BoardState>((set, get) => ({
         }
       }
 
-      // If still no board, get first available (prefer own boards)
+      // If still no board, get first available (prefer own and active boards).
+      // Активные важнее архивных: иначе пользователь, закрывший прошлый год,
+      // каждый раз попадал бы в доску только для чтения. Если активных нет —
+      // берём последнюю заархивированную, а не создаём молча пустую доску.
       if (!board && availableBoards.length > 0) {
-        const ownBoard = availableBoards.find(b => b.isOwner)
-        const targetBoard = ownBoard || availableBoards[0]
+        const activeBoards = availableBoards.filter((b) => !b.archivedAt)
+        const pool = activeBoards.length > 0
+          ? activeBoards
+          : [...availableBoards].sort((a, b) => (b.archivedAt ?? '').localeCompare(a.archivedAt ?? ''))
+        const targetBoard = pool.find((b) => b.isOwner) || pool[0]
 
         const { data, error } = await supabase
           .from('boards')
@@ -456,6 +482,81 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }
   },
 
+  archiveBoard: async (userId: string, boardId: string) => {
+    const archivedAt = new Date().toISOString()
+    const { error } = await supabase
+      .from('boards')
+      .update({ archived_at: archivedAt })
+      .eq('id', boardId)
+
+    if (error) throw error
+
+    set((state) => ({
+      board: state.board && state.board.id === boardId
+        ? { ...state.board, archivedAt }
+        : state.board,
+      availableBoards: state.availableBoards.map((b) =>
+        b.id === boardId ? { ...b, archivedAt } : b
+      ),
+    }))
+    trackEvent('board_archived')
+
+    // Заархивировали текущую доску — уходим на активную, если она есть.
+    // Если активных нет, остаёмся здесь: баннер предложит начать новый год.
+    if (get().board?.id === boardId) {
+      const nextBoard = get().availableBoards.find((b) => b.isOwner && !b.archivedAt)
+      if (nextBoard) {
+        await get().switchBoard(userId, nextBoard.id)
+      }
+    }
+  },
+
+  unarchiveBoard: async (boardId: string) => {
+    const { error } = await supabase
+      .from('boards')
+      .update({ archived_at: null })
+      .eq('id', boardId)
+
+    if (error) throw error
+
+    set((state) => ({
+      board: state.board && state.board.id === boardId
+        ? { ...state.board, archivedAt: null }
+        : state.board,
+      availableBoards: state.availableBoards.map((b) =>
+        b.id === boardId ? { ...b, archivedAt: null } : b
+      ),
+    }))
+    trackEvent('board_unarchived')
+  },
+
+  startNewSchoolYear: async (userId: string, options: NewSchoolYearOptions) => {
+    const sourceBoardId = get().board?.id
+    if (!sourceBoardId) throw new Error('No board selected')
+
+    // Создание доски, копирование колонок, предметов, заданий и участников
+    // плюс архивирование исходной — одной транзакцией на стороне БД
+    const { data, error } = await supabase.rpc('start_new_school_year', {
+      p_source_board_id: sourceBoardId,
+      p_title: options.title,
+      p_school_year: options.schoolYear ?? null,
+      p_subject_ids: options.subjectIds,
+      p_carry_over_tasks: options.carryOverTasks,
+      p_copy_members: options.copyMembers,
+      p_archive_source: options.archiveSource,
+    })
+
+    if (error) throw error
+
+    trackEvent('school_year_started', {
+      subjects: options.subjectIds?.length ?? get().subjects.length,
+      carriedTasks: options.carryOverTasks,
+      archivedSource: options.archiveSource,
+    })
+
+    await get().switchBoard(userId, data as string)
+  },
+
   addSubject: async (boardId: string, name: string, color?: string) => {
     const assignedColor = color ?? SUBJECT_COLORS[get().subjects.length % SUBJECT_COLORS.length]
     const { data, error } = await supabase
@@ -491,3 +592,21 @@ export const useBoardStore = create<BoardState>((set, get) => ({
     }))
   },
 }))
+
+/**
+ * Право на запись = подходящая роль И неархивная доска.
+ *
+ * Формула была продублирована в четырёх компонентах — с появлением архива
+ * условие стало составным, и держать его в одном месте дешевле, чем
+ * не забыть дописать `&& !archivedAt` в каждом.
+ * Настоящий запрет всё равно живёт в RLS, здесь только состояние интерфейса.
+ */
+export function useCanEdit(): boolean {
+  return useBoardStore(
+    (s) => (s.userRole === 'owner' || s.userRole === 'editor') && !s.board?.archivedAt
+  )
+}
+
+export function useIsArchived(): boolean {
+  return useBoardStore((s) => !!s.board?.archivedAt)
+}

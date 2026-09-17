@@ -186,6 +186,43 @@ export const en = {
     },
   },
 
+  archive: {
+    section: 'Archive',
+    badge: 'Archived',
+    archiveBoard: 'Archive',
+    archiveConfirm:
+      'Archive board "{{title}}"? Tasks are kept, but they can no longer be edited.',
+    unarchive: 'Restore from archive',
+    bannerTitle: 'Board archived',
+    bannerDescription: 'School year {{year}} is over. Tasks are read-only.',
+    bannerDescriptionNoYear: 'Tasks are read-only.',
+    startNewYear: 'Start a new school year',
+    error: 'Could not change board status',
+  },
+
+  newYear: {
+    menuItem: 'New school year…',
+    title: 'New school year',
+    description: 'We will create a new board and carry over what you need.',
+    titleLabel: 'Board name',
+    titlePlaceholder: '2026–27',
+    titleRequired: 'Enter a board name',
+    subjectsLabel: 'Subjects to carry over',
+    subjectsSelected: '{{count}} of {{total}} selected',
+    selectAll: 'Select all',
+    clearAll: 'Clear all',
+    noSubjects: 'The current board has no subjects',
+    carryOverTasks: 'Carry over unfinished tasks',
+    carryOverTasksHint: 'Everything except the "Done" column. Last year deadlines are cleared.',
+    copyMembers: 'Keep access for members',
+    copyMembersHint: 'They will not have to accept an invitation again ({{count}})',
+    archiveSource: 'Archive "{{title}}"',
+    archiveSourceHint: 'The board stays available for viewing and printing',
+    submit: 'Create board',
+    submitting: 'Creating...',
+    error: 'Could not create the board',
+  },
+
   settings: {
     title: 'Settings',
     notifications: 'Notifications',

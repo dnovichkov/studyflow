@@ -9,7 +9,7 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Pencil, Trash2, Plus, Check, X } from 'lucide-react'
-import { useBoardStore, SUBJECT_COLORS } from '@/stores/boardStore'
+import { useBoardStore, useCanEdit, SUBJECT_COLORS } from '@/stores/boardStore'
 import { getSafeErrorMessage } from '@/lib/errorMessages'
 
 interface SubjectsDialogProps {
@@ -19,8 +19,8 @@ interface SubjectsDialogProps {
 
 export function SubjectsDialog({ open, onOpenChange }: SubjectsDialogProps) {
   const { t } = useTranslation()
-  const { board, subjects, tasks, userRole, addSubject, updateSubject, deleteSubject } = useBoardStore()
-  const canEdit = userRole === 'owner' || userRole === 'editor'
+  const { board, subjects, tasks, addSubject, updateSubject, deleteSubject } = useBoardStore()
+  const canEdit = useCanEdit()
 
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
