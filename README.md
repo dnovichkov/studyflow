@@ -96,8 +96,9 @@ APP_PORT=8080 docker-compose up --build -d
 > Прод на dz-tracker.ru разворачивается через репозиторий
 > [sites_configs](https://github.com/dnovichkov/sites_configs): push в `main` собирает образ,
 > а общий workflow деплоя выкатывает его на сервер. HTTPS и маршрут делает Caddy, поэтому в
-> `docker-compose.prod.yml` нет портов, и `APP_PORT` для него не нужен. Umami поднимается
-> только с профилем `analytics` (см. комментарий в `docker-compose.prod.yml`).
+> `docker-compose.prod.yml` нет портов, и `APP_PORT` для него не нужен. Аналитика — общая
+> Umami из репозитория `stats`: id сайта задан в `docker-compose.prod.yml`, пустой
+> `VITE_UMAMI_WEBSITE_ID=` в `.env` её выключает.
 
 ```bash
 # Создать .env файл
