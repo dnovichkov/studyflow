@@ -25,6 +25,10 @@ export function initAnalytics(): void {
   script.defer = true
   script.src = '/umami/script.js'
   script.dataset.websiteId = websiteId
+  // Supabase hands tokens back in the address (#access_token=… after OAuth and password
+  // recovery, ?code=… with PKCE). The tracker records the full URL unless told otherwise.
+  script.dataset.excludeSearch = 'true'
+  script.dataset.excludeHash = 'true'
   document.head.appendChild(script)
 }
 
